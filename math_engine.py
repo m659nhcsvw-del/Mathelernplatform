@@ -110,3 +110,56 @@ def worked_solution():
         "steps":[{"source":sp.latex(t),"derivative":sp.latex(sp.diff(t,x))} for t in terms],
         "answer":sp.latex(correct)
     })
+
+# Version 0.2: Rechenschritte, Fehlerdiagnose und gestufte Hilfen.
+STEP_TERMS = [3*x**3, -2*x**2, 5*x, -1]
+STEP_LABELS = ["3x³", "−2x²", "5x", "−1"]
+
+def check_step(index, student):
+    try:
+        index = int(index)
+        if index not in range(4):
+            raise ParseError("Unbekannter Rechenschritt.")
+        proposed = parse_student(student)
+        term = STEP_TERMS[index]
+        target = sp.diff(term, x)
+        if sp.cancel(proposed - target) == 0:
+            return json.dumps({"status": "correct", "message": "Richtig. Dieser Summand wurde korrekt abgeleitet."})
+        # Diagnose auf Grundlage symbolischer Gleichwertigkeit mit typischen Fehlertermen.
+        if sp.cancel(proposed - term) == 0:
+            msg = "Du hast den ursprünglichen Summanden übernommen, statt ihn abzuleiten."
+        elif index in (0, 1) and sp.cancel(proposed - sp.diff(abs(term), x)) == 0:
+            msg = "Prüfe das Vorzeichen des ursprünglichen Summanden."
+        elif index in (0, 1) and sp.cancel(proposed - (term/x)) == 0:
+            msg = "Der Exponent wurde vermindert, aber der alte Exponent noch nicht mit dem Vorfaktor multipliziert."
+        elif index == 2 and proposed == 0:
+            msg = "Die Ableitung von 5x ist 5, nicht 0. Nur reine Konstanten fallen weg."
+        elif index == 3 and proposed == -1:
+            msg = "Die Ableitung einer Konstanten ist 0."
+        elif proposed == 0 and index in (0, 1):
+            msg = "Bei Potenzen von x ist die Ableitung im Allgemeinen nicht 0."
+        else:
+            msg = "Noch nicht richtig. Kontrolliere Faktor, Exponent und Vorzeichen."
+        return json.dumps({"status": "incorrect", "message": msg})
+    except (ParseError, ValueError, TypeError, OverflowError) as e:
+        return json.dumps({"status": "error", "message": str(e)})
+
+def step_hint(index, level):
+    index, level = int(index), int(level)
+    if index not in range(4):
+        raise ParseError("Unbekannter Rechenschritt.")
+    level = max(1, min(3, level))
+    t = STEP_TERMS[index]
+    derivative = sp.diff(t, x)
+    if level == 1:
+        message = ("Dieser Summand ist eine Konstante. Was ist die Ableitung einer Konstanten?"
+                   if index == 3 else
+                   "Nutze die Faktor- und Potenzregel: (a·x^n)' = a·n·x^(n−1).")
+    elif level == 2:
+        message = (["Multipliziere 3 mit 3 und reduziere den Exponenten von 3 auf 2.",
+                    "Beachte das Minuszeichen: Multipliziere −2 mit 2 und reduziere den Exponenten auf 1.",
+                    "Hier ist der Exponent 1. Der Vorfaktor bleibt erhalten und x fällt weg.",
+                    "Eine Konstante verändert sich nicht, wenn x sich ändert."][index])
+    else:
+        message = "Für diesen Summanden ergibt SymPy: (" + sp.latex(t) + ")' = " + sp.latex(derivative)
+    return json.dumps({"level": level, "message": message})

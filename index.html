@@ -24,15 +24,29 @@ button:disabled{opacity:.5;cursor:wait}
 #status.ok{background:#e8f7ee;color:#17643b}#status.bad{background:#fff0ef;color:#902929}
 .panel{border-top:1px solid #e0e6f0;margin-top:20px;padding-top:15px}
 .hidden{display:none}small{color:#5e6e82}
+.step{background:#f8faff;border:1px solid #dce3ef;border-radius:12px;padding:14px;margin:12px 0}
+.step math-field{margin:8px 0}
+.step-actions{display:flex;gap:6px;flex-wrap:wrap}
+.step-actions button{font-size:.9rem;padding:9px 12px}
+.step-result{min-height:1.3em;margin-top:8px;font-size:.94rem}
+.step-result.ok{color:#17643b}.step-result.bad{color:#902929}
 </style>
 </head>
 <body>
 <main><article>
 <p class="kicker">Mathematik · Jahrgangsstufe 11 · Analysis</p>
-<h1>Ableitungen – Potenzregel</h1>
+<h1>Ableitungen – Potenzregel</h1><p class="kicker">Version 0.2 · Rechenschritte und Fehlerdiagnose</p>
 <p>Bestimme die erste Ableitung der Funktion:</p>
 <div class="problem">\(f(x)=3x^3-2x^2+5x-1\)</div>
-<label for="answer"><strong>Deine Lösung:</strong></label>
+<section class="panel" aria-labelledby="stepsTitle">
+<h2 id="stepsTitle">1. Schrittweise ableiten</h2>
+<p>Leite jeden Summanden einzeln ab. Du kannst jeden Schritt prüfen und bis zu drei aufeinander aufbauende Hinweise abrufen.</p>
+<div id="steps"></div>
+</section>
+<section class="panel">
+<h2>2. Gesamtergebnis</h2>
+<label for="answer"><strong>Setze die Ableitungen zusammen und vereinfache:</strong></label>
+</section>
 <math-field id="answer" virtual-keyboard-mode="onfocus" aria-label="Ableitungsfunktion eingeben"></math-field>
 <div>
 <button id="check" disabled>Mit SymPy prüfen</button>
@@ -50,6 +64,46 @@ const $=id=>document.getElementById(id);
 const status=$("status"), check=$("check"), hint=$("hint"), show=$("show"), answer=$("answer");
 function setStatus(text,kind=""){status.className=kind;status.textContent=text;}
 let py;
+const stepNames=["3x^3","-2x^2","5x","-1"];
+const hintLevels=[0,0,0,0];
+const stepsContainer=$("steps");
+stepNames.forEach((name,i)=>{
+  const card=document.createElement("div");
+  card.className="step";
+  const label=document.createElement("div");
+  label.textContent=`Summand ${i+1}: ${name}`;
+  const field=document.createElement("math-field");
+  field.id=`step-${i}`;
+  field.setAttribute("aria-label",`Ableitung von Summand ${i+1}`);
+  const actions=document.createElement("div");
+  actions.className="step-actions";
+  const verify=document.createElement("button");
+  verify.className="step-check";verify.disabled=true;verify.textContent="Schritt prüfen";
+  const help=document.createElement("button");
+  help.className="step-hint secondary";help.disabled=true;help.textContent="Hinweis 1";
+  const feedback=document.createElement("div");
+  feedback.className="step-result";feedback.setAttribute("role","status");
+  verify.onclick=async()=>{
+    verify.disabled=true;
+    try{
+      py.globals.set("step_input",field.getValue("ascii-math"));
+      py.globals.set("step_index",i);
+      const result=JSON.parse(await py.runPythonAsync("check_step(step_index, step_input)"));
+      feedback.className="step-result "+(result.status==="correct"?"ok":result.status==="incorrect"?"bad":"");
+      feedback.textContent=result.message;
+    }catch(e){feedback.textContent="Fehler bei der Prüfung.";console.error(e)}
+    finally{verify.disabled=false}
+  };
+  help.onclick=async()=>{
+    hintLevels[i]=Math.min(3,hintLevels[i]+1);
+    py.globals.set("hint_index",i);py.globals.set("hint_level",hintLevels[i]);
+    const result=JSON.parse(await py.runPythonAsync("step_hint(hint_index,hint_level)"));
+    feedback.className="step-result";feedback.textContent=`Hinweis ${result.level}: ${result.message}`;
+    help.textContent=hintLevels[i]<3?`Hinweis ${hintLevels[i]+1}`:"Hinweise ausgeschöpft";
+    help.disabled=hintLevels[i]>=3;
+  };
+  actions.append(verify,help);card.append(label,field,actions,feedback);stepsContainer.append(card);
+});
 try {
   py=await loadPyodide();
   await py.loadPackage("sympy");
@@ -57,7 +111,7 @@ try {
   if(!response.ok)throw new Error("math_engine.py nicht erreichbar");
   const engine=await response.text();
   await py.runPythonAsync(engine);
-  [check,hint,show].forEach(b=>b.disabled=false);
+  [check,hint,show,...document.querySelectorAll(".step-check,.step-hint")].forEach(b=>b.disabled=false);
   setStatus("Python und SymPy sind geladen. Du kannst deine Ableitung prüfen.","ok");
 } catch(err) {
   setStatus("Der Python-Rechenkern konnte nicht geladen werden. Bitte Internetverbindung und Veröffentlichung der Projektdateien prüfen.","bad");
