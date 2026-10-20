@@ -4198,8 +4198,9 @@ function FunktionenExplorer(opts = {}) {
       xP: w.xP, xA: w.xA, xB: w.xB, andere: daten(fn === "f" ? "g" : "f") };
   }
   let hlFenster = null;
-  function hlFensterBauen() {
-    if (hlFenster) return hlFenster;
+  let hlStilDa = false;
+  function hlStil() {                                  // Stil für ⓘ und Fenster – sofort beim Start, nicht erst beim ersten Öffnen
+    if (hlStilDa) return; hlStilDa = true;
     const st = document.createElement("style");
     st.textContent = HerleitungAnsicht.CSS + `
 .hl-fenster { position: fixed; z-index: 60; right: 18px; top: 18px; width: min(760px, calc(100vw - 36px)); height: min(84vh, 980px);
@@ -4212,11 +4213,19 @@ function FunktionenExplorer(opts = {}) {
 .hl-kopf button { font: 600 13px -apple-system, "Segoe UI", Arial, sans-serif; border: 1px solid #58C4DD; background: #58C4DD; color: #0b1d22; border-radius: 7px; padding: 5px 12px; cursor: pointer; }
 .hl-kopf button.hl-zu { background: transparent; color: #ececec; border-color: #555; padding: 5px 10px; }
 .hl-inhalt { flex: 1; overflow: auto; padding: 18px 24px 28px; -webkit-overflow-scrolling: touch; }
-.hl-i { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; margin-left: 6px; border-radius: 50%;
-  font: 600 11px -apple-system, "Segoe UI", Arial, sans-serif; border: 1px solid currentColor; opacity: .6; cursor: help; flex: none; vertical-align: middle; }
+/* ⓘ grundsätzlich unten rechts im Knopf, außerhalb des Textflusses; der Knopf hält rechts unten Platz frei */
+.hl-knopf { position: relative; }
+button.hl-knopf.chip, button.hl-knopf.sbtn { padding-right: 20px; }
+button.hl-knopf.sbtn { padding-left: 4px; padding-bottom: 9px; }
+.toggles.three button.hl-knopf.chip { padding-left: 6px; padding-right: 15px; gap: 5px; font-size: 12px; }
+.toggles.three button.hl-knopf.chip::before { width: 8px; height: 8px; }
+button.hl-knopf.kchip { padding-bottom: 17px; }
+button.hl-knopf.kchip .hl-i { bottom: 2px; right: 2px; }
+.hl-i { position: absolute; right: 3px; bottom: 3px; display: flex; align-items: center; justify-content: center;
+  width: 13px; height: 13px; margin: 0; border-radius: 50%; box-sizing: border-box; line-height: 1;
+  font: italic 600 9px/1 Georgia, "Times New Roman", serif; border: 1px solid currentColor; opacity: .55; cursor: help; pointer-events: auto; }
 .hl-i:hover { opacity: 1; }
-.kchip .hl-i { position: absolute; top: 3px; right: 3px; margin: 0; width: 15px; height: 15px; font-size: 10px; }
-.kchip { position: relative; }
+@media (hover: none) { .hl-i { width: 15px; height: 15px; font-size: 10px; opacity: .7; } .hl-i::after { content: ""; position: absolute; inset: -8px; } }
 @media print {
   html.hl-druck body > *:not(.hl-fenster) { display: none !important; }
   html.hl-druck, html.hl-druck body { background: #fff !important; height: auto !important; overflow: visible !important; }
@@ -4225,7 +4234,11 @@ function FunktionenExplorer(opts = {}) {
   html.hl-druck .hl-inhalt { overflow: visible !important; padding: 0 !important; }
   @page { margin: 18mm 16mm; }
 }`;
-    document.head.appendChild(st);
+    document.body.appendChild(st);                     // nach dem Stil des Explorers, damit diese Regeln Vorrang haben
+  }
+  function hlFensterBauen() {
+    if (hlFenster) return hlFenster;
+    hlStil();
     hlFenster = document.createElement("div");
     hlFenster.className = "hl-fenster"; hlFenster.hidden = true;
     hlFenster.setAttribute("role", "dialog"); hlFenster.setAttribute("aria-label", "Rechenweg");
@@ -4296,13 +4309,15 @@ function FunktionenExplorer(opts = {}) {
     i.setAttribute("role", "button"); i.setAttribute("aria-label", "Rechenweg anzeigen");
     i.addEventListener("click", e => { e.stopPropagation(); e.preventDefault(); hlZeigen(art, fnVon()); });
     i.addEventListener("pointerdown", e => e.stopPropagation());
-    (btn.querySelector(":scope > span:not(.sym):not(.txt)") || btn).appendChild(i);
+    btn.classList.add("hl-knopf");
+    btn.appendChild(i);                                   // immer direkt im Knopf, unten rechts (absolut)
     btn.addEventListener("dblclick", e => {               // zwei Klicks haben zweimal umgeschaltet → Eigenschaft einblenden
       e.preventDefault();
       if (btn.getAttribute("aria-pressed") === "false") btn.click();
       hlZeigen(art, fnVon());
     });
   }
+  hlStil();
   for (const [id, art] of HL_KNOEPFE) if ($(id)) hlKnopf($(id), art, () => S.akt);
   sumKnoepfe.forEach(b => hlKnopf(b, b.dataset.art, () => S.akt));
   kurvenKnoepfe.forEach(b => hlKnopf(b, HL_KURVE[b.dataset.k], () => b.closest(".kurven").dataset.fn));
