@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Formeleditor">
+<meta name="theme-color" content="#0e0f12">
+<title>Formeleditor</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="katex/katex.min.css">
+<script src="katex/katex.min.js"></script>
+<script src="ziehen.js"></script>
+<script src="formelbild.js"></script>
+<style>
+:root {
+  --bg: #0e0f12; --panel: #17181d; --panel2: #1f2026; --linie: #2c2e36; --text: #ececec; --dim: #9a9ca6;
+  --akzent: #58C4DD; --akzent-text: #0b1d22; --gelb: #FFC857; --rot: #FF7A90; --gruen: #83C167;
+  --formel: #f4f4f4; --ergebnis: #FFC857; --fokus: rgba(88,196,221,.35); --platz: rgba(255,200,87,.35);
+  color-scheme: dark;
+}
+:root[data-design="pearson"] {
+  --bg: #f5f6f8; --panel: #ffffff; --panel2: #f0f2f6; --linie: #d9dde5; --text: #1d2433; --dim: #5d6576;
+  --akzent: #2454c9; --akzent-text: #ffffff; --gelb: #b5620a; --rot: #b23064; --gruen: #0e7c66;
+  --formel: #111827; --ergebnis: #0e7c66; --fokus: rgba(36,84,201,.25); --platz: rgba(181,98,10,.25);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif; display: flex; flex-direction: column; }
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; }
+
+/* Kopfleiste */
+header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--linie); flex-wrap: wrap; }
+header h1 { font-size: 17px; margin: 0 12px 0 0; font-weight: 650; letter-spacing: .2px; }
+header h1 span { color: var(--akzent); }
+.knopf { border: 1px solid var(--linie); background: var(--panel2); border-radius: 8px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+a.knopf { text-decoration: none; }
+.knopf:hover { border-color: var(--akzent); }
+.knopf.haupt { background: var(--akzent); color: var(--akzent-text); border-color: var(--akzent); font-weight: 600; }
+.knopf:disabled { opacity: .45; cursor: default; }
+.trenner { flex: 1; }
+.design { display: inline-flex; border: 1px solid var(--linie); border-radius: 8px; overflow: hidden; }
+.design button { border: 0; background: transparent; padding: 6px 10px; cursor: pointer; }
+.design button[aria-checked="true"] { background: var(--akzent); color: var(--akzent-text); }
+#kern { font-size: 12px; color: var(--dim); }
+#kern.fehlt { color: var(--rot); font-weight: 600; }
+
+/* Hauptbereich */
+main { flex: 1; display: grid; grid-template-columns: 340px 1fr; min-height: 0; }
+aside { background: var(--panel); border-right: 1px solid var(--linie); display: flex; flex-direction: column; min-height: 0; }
+.reiter { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px; border-bottom: 1px solid var(--linie); }
+.reiter button { border: 1px solid var(--linie); background: transparent; border-radius: 999px; padding: 3px 10px; font-size: 12.5px; cursor: pointer; }
+.reiter button[aria-selected="true"] { background: var(--akzent); color: var(--akzent-text); border-color: var(--akzent); }
+.vorlagen { overflow-y: auto; padding: 10px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-content: start; }
+.vorlage { min-width: 0; border: 1px solid var(--linie); background: var(--panel2); border-radius: 10px; padding: 8px 6px 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 74px; text-align: center; }
+.vorlage:hover { border-color: var(--akzent); }
+.vorlage .bild { color: var(--formel); font-size: 15px; min-height: 34px; display: flex; align-items: center; max-width: 100%; overflow: hidden; }
+.vorlage .titel { font-size: 11.5px; color: var(--dim); }
+.befehlshilfe { border-top: 1px solid var(--linie); padding: 10px 12px; font-size: 12px; color: var(--dim); min-height: 58px; }
+.befehlshilfe code { color: var(--text); font-family: ui-monospace, Menlo, monospace; }
+
+.blatt { overflow-y: auto; padding: 18px 22px 80px; }
+.zeile { display: grid; grid-template-columns: 34px 1fr auto; gap: 6px 10px; align-items: start; padding: 8px 10px; border: 1px solid transparent; border-radius: 12px; margin-bottom: 6px; }
+.zeile.aktiv { border-color: var(--linie); background: var(--panel); }
+.nr { color: var(--dim); font-size: 12px; padding-top: 10px; text-align: right; font-variant-numeric: tabular-nums; }
+.inhalt { min-width: 0; }
+.eingabe { width: 100%; resize: none; border: 1px solid var(--linie); border-radius: 8px; background: var(--panel2); color: var(--text); padding: 8px 10px; font: 15px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; outline: none; overflow: hidden; }
+.eingabe:focus { border-color: var(--akzent); box-shadow: 0 0 0 3px var(--fokus); }
+.satz { color: var(--formel); font-size: 19px; padding: 6px 4px; min-height: 40px; cursor: text; overflow-x: auto; overflow-y: hidden; }
+.satz.leer { color: var(--dim); font-size: 14px; font-style: italic; }
+.satz.berechnet .katex .mrel + .mord, .satz.berechnet { }
+.vorschau { color: var(--formel); font-size: 17px; padding: 6px 4px 0; min-height: 30px; overflow-x: auto; overflow-y: hidden; opacity: .9; }
+.meldung { font-size: 12.5px; color: var(--rot); padding: 2px 4px; }
+.meldung.info { color: var(--dim); }
+.ergebnis { color: var(--ergebnis); }
+.aktionen { display: flex; gap: 4px; padding-top: 4px; opacity: .25; transition: opacity .15s; }
+.zeile:hover .aktionen, .zeile.aktiv .aktionen { opacity: 1; }
+@media (hover: none) { .aktionen { opacity: .7; } .aktionen button { width: 36px; height: 34px; } }
+body.browser .lo-nur { display: none; }
+.zieh { display: inline-flex; align-items: center; gap: 6px; border: 1px dashed var(--linie); border-radius: 10px; padding: 3px 6px; }
+.zieh[hidden] { display: none; }
+.zieh img { height: 34px; max-width: 220px; object-fit: contain; background: #fff; border-radius: 6px; padding: 2px 4px; cursor: grab;
+  -webkit-user-drag: element; -webkit-touch-callout: default; user-select: none; -webkit-user-select: none; }
+.zieh a { color: var(--akzent); font-size: 12.5px; text-decoration: none; white-space: nowrap; -webkit-touch-callout: default; }
+.zieh small { color: var(--dim); font-size: 11px; max-width: 70px; line-height: 1.15; }
+.abwurf { position: fixed; inset: 12px; border: 3px dashed var(--akzent); border-radius: 18px; background: rgba(88,196,221,.12);
+  display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; color: var(--akzent); pointer-events: none; z-index: 50; }
+.abwurf[hidden] { display: none; }
+.gruppe { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.gruppe select { font: inherit; color: inherit; background: var(--panel2); border: 1px solid var(--linie); border-radius: 8px; padding: 5px 6px; }
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--linie); border-radius: 14px; padding: 18px; width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+dialog::backdrop { background: rgba(0,0,0,.45); }
+dialog h2 { margin: 0 0 8px; font-size: 16px; }
+dialog p { margin: 4px 0 10px; color: var(--dim); font-size: 12.5px; }
+dialog textarea { width: 100%; min-height: 110px; border: 1px solid var(--linie); border-radius: 8px; background: var(--panel2); color: var(--text); padding: 8px; font: 13px/1.4 ui-monospace, Menlo, monospace; }
+dialog .knoepfe { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; }
+.verlauf { display: grid; gap: 6px; max-height: 38vh; overflow-y: auto; margin-top: 6px; }
+.verlauf button { text-align: left; border: 1px solid var(--linie); background: var(--panel2); border-radius: 8px; padding: 6px 10px; cursor: pointer; overflow-x: auto; color: var(--formel); }
+.verlauf button:hover { border-color: var(--akzent); }
+.verlauf small { display: block; color: var(--dim); font-size: 11px; }
+.aktionen button { border: 1px solid var(--linie); background: var(--panel2); border-radius: 7px; width: 30px; height: 28px; cursor: pointer; font-size: 13px; }
+.aktionen button:hover { border-color: var(--akzent); }
+.neu { margin: 10px 0 0 44px; }
+.hinweis { margin: 22px 0 0 44px; color: var(--dim); font-size: 12.5px; max-width: 760px; }
+.hinweis kbd { border: 1px solid var(--linie); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; font: 11.5px ui-monospace, Menlo, monospace; }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--akzent); padding: 8px 14px; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.3); }
+.katex { font-size: 1.12em; }
+.katex-display { margin: 0; text-align: left; }
+.katex-display > .katex { text-align: left; }
+.vorlage .katex { font-size: 1em; }
+@media (max-width: 760px) { main { grid-template-columns: 1fr; } aside { max-height: 42vh; border-right: 0; border-bottom: 1px solid var(--linie); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Formel<span>editor</span></h1>
+  <button class="knopf haupt" id="berechne" title="Aktive Zeile mit SymPy/NumPy/SciPy auswerten (⌘↩)">▶ Berechne</button>
+  <button class="knopf" id="alleBerechnen" title="Alle Zeilen der Reihe nach auswerten">Alle berechnen</button>
+  <span class="gruppe" id="loGruppe" hidden>
+    <button class="knopf" id="uebernehmen" title="Aktive Zeile als LibreOffice-Formel bereitstellen; dann in LibreOffice „Formeleditor → Formel einfügen“">⤓ In LibreOffice übernehmen</button>
+    <button class="knopf" id="blattUebernehmen" title="Alle Zeilen als eine mehrzeilige LibreOffice-Formel bereitstellen">⤓ Alle (LibreOffice)</button>
+  </span>
+  <span class="gruppe" id="iworkGruppe">
+    <button class="knopf" id="iworkKopieren" title="Aktive Zeile als iWork-Gleichung kopieren; in Pages, Keynote oder Numbers: Einfügen → Gleichung …, einsetzen, „Einfügen“">⧉ Für Pages/Keynote/Numbers</button>
+    <button class="knopf" id="iworkAlle" title="Alle Zeilen als eine mehrzeilige iWork-Gleichung kopieren">⧉ Alle (iWork)</button>
+    <span class="gruppe" id="macGruppe" hidden>
+      <select id="iworkApp" aria-label="Zielprogramm"><option>Pages</option><option>Keynote</option><option>Numbers</option></select>
+      <button class="knopf" id="iworkEinfuegen" title="Aktive Zeile direkt als Gleichung in das vorderste Dokument einfügen">⤓ Direkt einfügen</button>
+    </span>
+    <button class="knopf" id="iworkLaden" title="Eine aus Pages, Keynote oder Numbers kopierte Gleichung wieder bearbeiten">⟲ Aus iWork laden</button>
+  </span>
+  <span class="zieh" id="ziehFeld" hidden title="Formel der aktiven Zeile: Bild halten und in Pages, Keynote, Numbers oder eine andere App ziehen. Zum Bearbeiten das Bild zurück hierher ziehen oder den Link antippen.">
+    <img id="ziehBild" alt="Formel – in eine andere App ziehen" draggable="true">
+    <small>ziehen ⇢</small>
+    <a id="ziehLink" href="#" draggable="true" title="Diesen Link neben die Formel ziehen: Antippen öffnet sie wieder hier">✎ Link</a>
+  </span>
+  <a class="knopf" id="zumExplorer" href="explorer/" target="_blank" rel="noopener" title="Funktionen-Explorer (Graphen für Pages, Keynote, Numbers) in neuem Fenster öffnen">Funktionen-Explorer ↗</a>
+  <span class="trenner"></span>
+  <span id="kern">Rechenkern wird geprüft …</span>
+  <div class="design" role="radiogroup" aria-label="Darstellung">
+    <button role="radio" aria-checked="true" data-design="3b1b">dunkel</button>
+    <button role="radio" aria-checked="false" data-design="pearson">hell</button>
+  </div>
+</header>
+<main>
+  <aside>
+    <div class="reiter" id="reiter" role="tablist"></div>
+    <div class="vorlagen" id="vorlagen"></div>
+    <div class="befehlshilfe" id="befehlshilfe">Vorlage anklicken: Sie wird an der Schreibmarke eingefügt, <b>□</b> ist ein Platzhalter (mit <kbd>Tab</kbd> zum nächsten).</div>
+  </aside>
+  <section class="blatt" id="blatt">
+    <div id="zeilen"></div>
+    <button class="knopf neu" id="neueZeile">+ Neue Zeile</button>
+    <div class="hinweis">
+      Schreibweise wie im Funktionen-Explorer: <code>2x^2 - 3x + 1</code>, Dezimalkomma <code>1,5</code>, Argumente mit Semikolon <code>integrate(x^2; x; 0; 1)</code>,
+      Festlegungen mit <code>:=</code> (<code>a := 3</code>, <code>f(x) := x^3 - 4x</code>) gelten in allen folgenden Zeilen.<br>
+      Verlässt man eine Zeile, wird sie nur gesetzt. <b>Berechne</b> (<kbd>⌘</kbd><kbd>↩</kbd>) wertet sie mit SymPy, NumPy und SciPy aus.
+      <kbd>↩</kbd> neue Zeile · <kbd>Tab</kbd> nächster Platzhalter · <kbd>↑</kbd><kbd>↓</kbd> Zeile wechseln.<br>
+      <b>Ziehen (iPad, Mac):</b> das Formelbild oben bei „ziehen ⇢“ halten und in Pages, Keynote, Numbers oder eine andere App ziehen, „✎ Link“ daneben legen.
+      Zum Ändern das Bild aus dem Dokument wieder hierher ziehen oder den Link antippen, bearbeiten und das neue Bild hinüberziehen.
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" hidden></div>
+<div class="abwurf" id="abwurf" hidden>Loslassen – Formel wieder bearbeiten</div>
+<dialog id="ladeDialog">
+  <h2>Gleichung aus Pages, Keynote oder Numbers bearbeiten</h2>
+  <p>In iWork die Gleichung doppelt antippen bzw. anklicken, den gesamten Text markieren und kopieren, hier einsetzen und „Laden“ wählen. Oder unten eine der zuletzt erzeugten Gleichungen wählen.</p>
+  <textarea id="ladeText" spellcheck="false" autocapitalize="off" placeholder="LaTeX der Gleichung hier einsetzen"></textarea>
+  <div class="knoepfe"><button class="knopf" id="ladeAbbrechen">Abbrechen</button><button class="knopf haupt" id="ladeOk">Laden</button></div>
+  <h2 style="margin-top:14px">Zuletzt erzeugt</h2>
+  <div class="verlauf" id="verlauf"></div>
+</dialog>
+<dialog id="kopierDialog">
+  <h2>Bitte selbst kopieren</h2>
+  <p>Der Browser hat das automatische Kopieren nicht erlaubt. Der Text ist markiert – mit <kbd>⌘</kbd><kbd>C</kbd> bzw. „Kopieren“ übernehmen.</p>
+  <textarea id="kopierText" readonly></textarea>
+  <div class="knoepfe"><button class="knopf haupt" id="kopierOk">Fertig</button></div>
+</dialog>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const PLATZ = "□";
+// ---------------------------------------------------------------- Rechenkern: lokaler Server (Mac-Programm) oder Python im Browser (Pyodide)
+const MODUS = { art: null, mac: false };
+let worker = null, wNr = 0;
+const wWarte = new Map();
+async function serverDa() {
+  if (location.protocol === "file:" || new URLSearchParams(location.search).has("browser")) return false;
+  try {
+    const r = await fetch("/api/ping", { cache: "no-store" });
+    if (!r.ok) return false;
+    return !!(await r.json()).ok;
+  } catch { return false; }
+}
+function starteWorker() {
+  const q = new URLSearchParams(location.search), p = new URLSearchParams();
+  if (q.get("pyodide")) p.set("pyodide", q.get("pyodide"));
+  worker = new Worker("pyworker.js" + ([...p].length ? "?" + p : ""));
+  worker.onmessage = ev => {
+    const m = ev.data;
+    if (m.status) return kernStatus(m.status);
+    const f = wWarte.get(m.id);
+    if (f) { wWarte.delete(m.id); f(m.antwort); }
+  };
+  worker.onerror = e => kernStatus({ stufe: -1, text: "Rechenkern: " + (e.message || "Fehler") });
+}
+function kernStatus(st) {
+  const k = $("kern");
+  k.textContent = st.text; k.classList.toggle("fehlt", st.stufe < 0);
+}
+const bereit = (async () => {
+  if (await serverDa()) MODUS.art = "server";
+  else { MODUS.art = "browser"; starteWorker(); }
+})();
+const api = async (pfad, daten) => {
+  await bereit;
+  if (MODUS.art === "server") {
+    const r = await fetch(pfad, daten === undefined ? { cache: "no-store" } : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
+    return r.json();
+  }
+  return new Promise(res => { const id = ++wNr; wWarte.set(id, res); worker.postMessage({ id, pfad, daten }); });
+};
+const setze = (el, tex, display = false) => {
+  try { katex.render(tex, el, { throwOnError: false, displayMode: display, strict: "ignore", trust: false }); }
+  catch (e) { el.textContent = tex; }
+};
+let toastUhr = null;
+function toast(text) { const t = $("toast"); t.textContent = text; t.hidden = false; clearTimeout(toastUhr); toastUhr = setTimeout(() => t.hidden = true, 2600); }
+
+// ---------------------------------------------------------------- Darstellung
+function design(name) {
+  if (name === "pearson") document.documentElement.dataset.design = "pearson"; else delete document.documentElement.dataset.design;
+  document.querySelectorAll(".design button").forEach(b => b.setAttribute("aria-checked", b.dataset.design === name));
+  try { localStorage.setItem("formeleditor.design", name); } catch {}
+}
+document.querySelectorAll(".design button").forEach(b => b.addEventListener("click", () => design(b.dataset.design)));
+try { design(localStorage.getItem("formeleditor.design") || "3b1b"); } catch { design("3b1b"); }
+
+// ---------------------------------------------------------------- Zeilen
+// zeile: { text, satz: {latex, starmath, definiert} | null, fehler, ergebnis: {...} | null, el }
+const Z = [];
+let aktiv = 0;
+
+function namenBis(i) {
+  const v = new Set(), f = new Set();
+  for (let j = 0; j < i; j++) {
+    const d = Z[j].satz && Z[j].satz.definiert;
+    if (!d) continue;
+    if (d[0] === "variable") { v.add(d[1]); f.delete(d[1]); } else { f.add(d[1]); v.delete(d[1]); }
+  }
+  return { variablen: [...v], funktionen: [...f] };
+}
+
+function neueZeile(nach = Z.length - 1, text = "") {
+  const z = { text, satz: null, fehler: null, ergebnis: null };
+  const el = document.createElement("div"); el.className = "zeile";
+  el.innerHTML = `<div class="nr"></div>
+    <div class="inhalt">
+      <div class="satz leer" title="Klicken zum Bearbeiten"></div>
+      <textarea class="eingabe" rows="1" spellcheck="false" autocomplete="off" autocapitalize="off" hidden></textarea>
+      <div class="vorschau" hidden></div>
+      <div class="meldung" hidden></div>
+    </div>
+    <div class="aktionen">
+      <button data-a="rechnen" title="Berechne (⌘↩)">▶</button>
+      <button data-a="lo" title="In LibreOffice übernehmen" class="lo-nur">⤓</button>
+      <button data-a="iwork" title="Für Pages/Keynote/Numbers kopieren">≡</button>
+      <button data-a="tex" title="LaTeX kopieren">⧉</button>
+      <button data-a="weg" title="Zeile löschen">✕</button>
+    </div>`;
+  z.el = el;
+  z.ta = el.querySelector(".eingabe"); z.satzEl = el.querySelector(".satz"); z.vorschau = el.querySelector(".vorschau"); z.meldung = el.querySelector(".meldung");
+  z.ta.value = text;
+  Z.splice(nach + 1, 0, z);
+  const liste = $("zeilen");
+  liste.insertBefore(el, liste.children[nach + 1] || null);
+  verdrahte(z);
+  nummern();
+  return z;
+}
+
+function nummern() { Z.forEach((z, i) => { z.el.querySelector(".nr").textContent = (i + 1) + ")"; }); }
+
+function index(z) { return Z.indexOf(z); }
+
+function bearbeiten(z, ende = true) {
+  Z.forEach(y => { if (y !== z) zeigeSatz(y); });
+  aktiv = index(z);
+  Z.forEach(y => y.el.classList.toggle("aktiv", y === z));
+  z.satzEl.hidden = true; z.ta.hidden = false; z.vorschau.hidden = false;
+  hoehe(z.ta);
+  z.ta.focus();
+  if (ende) { const n = z.ta.value.length; z.ta.setSelectionRange(n, n); }
+  vorschau(z);
+}
+
+function zeigeSatz(z) {
+  z.ta.hidden = true; z.vorschau.hidden = true; z.satzEl.hidden = false;
+  const leer = !z.text.trim();
+  z.satzEl.classList.toggle("leer", leer && !z.ergebnis);
+  if (z.ergebnis && !z.ergebnis.fehler) { setze(z.satzEl, z.ergebnis.latex, true); z.satzEl.classList.add("ergebnis"); }
+  else if (leer) { z.satzEl.textContent = "leere Zeile – klicken zum Schreiben"; z.satzEl.classList.remove("ergebnis"); }
+  else if (z.satz && z.satz.latex) { setze(z.satzEl, z.satz.latex, true); z.satzEl.classList.remove("ergebnis"); }
+  else { z.satzEl.textContent = z.text; z.satzEl.classList.remove("ergebnis"); }
+  meldung(z);
+}
+
+function meldung(z) {
+  const m = z.ergebnis && z.ergebnis.fehler ? z.ergebnis.fehler : z.fehler;
+  z.meldung.hidden = !m; z.meldung.textContent = m || "";
+}
+
+function hoehe(ta) { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px"; }
+
+let satzNr = 0;
+async function satz(z) {
+  const i = index(z), nr = ++satzNr;
+  z.anfrage = nr;
+  const n = namenBis(i);
+  const r = await api("/api/satz", { text: z.text, variablen: n.variablen, funktionen: n.funktionen });
+  if (z.anfrage !== nr) return;
+  const alt = JSON.stringify(z.satz && z.satz.definiert);
+  if (r.fehler) { z.fehler = z.text.trim() ? r.fehler : null; }
+  else { z.fehler = null; z.satz = r; }
+  if (!z.ta.hidden) { if (!r.fehler) setze(z.vorschau, r.latex, true); meldung(z); }
+  else zeigeSatz(z);
+  // geänderte Festlegung → folgende Zeilen neu setzen
+  if (JSON.stringify(z.satz && z.satz.definiert) !== alt) Z.slice(i + 1).forEach(y => satz(y));
+}
+let vorschauUhr = null;
+function vorschau(z) { clearTimeout(vorschauUhr); vorschauUhr = setTimeout(() => satz(z), 90); }
+
+function verdrahte(z) {
+  z.satzEl.addEventListener("click", () => bearbeiten(z));
+  z.ta.addEventListener("focus", () => { aktiv = index(z); Z.forEach(y => y.el.classList.toggle("aktiv", y === z)); });
+  z.ta.addEventListener("input", () => {
+    z.text = z.ta.value.replace(/\n/g, " ");
+    if (z.ta.value !== z.text) z.ta.value = z.text;
+    z.ergebnis = null; hoehe(z.ta); vorschau(z); merkeBlatt();
+  });
+  z.ta.addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== z.ta) { satz(z); zeigeSatz(z); } }, 120));
+  z.ta.addEventListener("keydown", e => tasten(z, e));
+  z.el.querySelector(".aktionen").addEventListener("mousedown", e => e.preventDefault());
+  z.el.querySelector(".aktionen").addEventListener("click", e => {
+    const a = e.target.dataset && e.target.dataset.a; if (!a) return;
+    if (a === "rechnen") berechne(z);
+    if (a === "lo") uebernehmen(z);
+    if (a === "tex") kopiereTex(z);
+    if (a === "iwork") iworkKopieren(z);
+    if (a === "weg") loesche(z);
+  });
+}
+
+function tasten(z, e) {
+  const i = index(z);
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); berechne(z); return; }
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); const n = neueZeile(i); bearbeiten(n); return; }
+  if (e.key === "Tab") {
+    const v = z.ta.value, s = z.ta.selectionStart, en = z.ta.selectionEnd;
+    let p = e.shiftKey ? v.lastIndexOf(PLATZ, Math.max(0, s - 1)) : v.indexOf(PLATZ, en > s ? en : s);
+    if (!e.shiftKey && p < 0) p = v.indexOf(PLATZ);
+    if (p >= 0) { e.preventDefault(); z.ta.setSelectionRange(p, p + 1); }
+    return;
+  }
+  if (e.key === "ArrowUp" && i > 0 && z.ta.selectionStart === 0) { e.preventDefault(); bearbeiten(Z[i - 1]); return; }
+  if (e.key === "ArrowDown" && i < Z.length - 1 && z.ta.selectionEnd === z.ta.value.length) { e.preventDefault(); bearbeiten(Z[i + 1], false); return; }
+  if (e.key === "Backspace" && !z.ta.value && Z.length > 1) { e.preventDefault(); const v = Z[i - 1] || Z[i + 1]; loesche(z); bearbeiten(v); }
+}
+
+function loesche(z) {
+  const i = index(z);
+  if (Z.length === 1) { z.text = ""; z.ta.value = ""; z.satz = null; z.ergebnis = null; z.fehler = null; zeigeSatz(z); return; }
+  Z.splice(i, 1); z.el.remove(); nummern(); merkeBlatt();
+  aktiv = Math.min(aktiv, Z.length - 1);
+  Z.slice(i).forEach(y => satz(y));
+}
+
+// ---------------------------------------------------------------- Vorlagen
+let vorlagenDaten = [];
+async function ladeVorlagen() {
+  vorlagenDaten = await api("/api/vorlagen");
+  const texte = vorlagenDaten.flatMap(k => k.vorlagen.map(v => v.eingabe));
+  const saetze = await api("/api/satz_liste", { texte });
+  let n = 0;
+  vorlagenDaten.forEach(k => k.vorlagen.forEach(v => { v.satz = saetze[n++]; }));
+  const reiter = $("reiter");
+  vorlagenDaten.forEach((k, i) => {
+    const b = document.createElement("button"); b.textContent = k.kategorie; b.setAttribute("role", "tab");
+    b.addEventListener("mousedown", e => e.preventDefault());
+    b.addEventListener("click", () => zeigeKategorie(i));
+    reiter.appendChild(b);
+  });
+  zeigeKategorie(0);
+}
+function zeigeKategorie(i) {
+  [...$("reiter").children].forEach((b, j) => b.setAttribute("aria-selected", i === j));
+  const box = $("vorlagen"); box.innerHTML = "";
+  for (const v of vorlagenDaten[i].vorlagen) {
+    const b = document.createElement("button"); b.className = "vorlage";
+    b.innerHTML = `<span class="bild"></span><span class="titel"></span>`;
+    setze(b.querySelector(".bild"), v.satz && v.satz.latex ? v.satz.latex : v.eingabe);
+    b.querySelector(".titel").textContent = v.titel;
+    b.title = v.eingabe + "  →  " + v.befehl;
+    b.addEventListener("mousedown", e => e.preventDefault());       // Schreibmarke im Eingabefeld behalten
+    b.addEventListener("mouseenter", () => hilfe(v));
+    b.addEventListener("click", () => einfuegen(v.eingabe));
+    box.appendChild(b);
+  }
+}
+function hilfe(v) {
+  $("befehlshilfe").innerHTML = `<b></b><br>Eingabe: <code></code><br>Python: <code></code>`;
+  const t = $("befehlshilfe").querySelectorAll("b, code");
+  t[0].textContent = v.titel + (v.hinweis ? " – " + v.hinweis : ""); t[1].textContent = v.eingabe; t[2].textContent = v.befehl;
+}
+function einfuegen(schnipsel) {
+  let z = Z[aktiv];
+  if (!z) z = neueZeile();
+  if (z.ta.hidden) bearbeiten(z);
+  const ta = z.ta, s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
+  let neu = schnipsel, cursor;
+  const markiert = v.slice(s, e);
+  if (markiert && markiert !== PLATZ && neu.includes(PLATZ)) neu = neu.replace(PLATZ, markiert);  // Auswahl in den ersten Platzhalter
+  ta.value = v.slice(0, s) + neu + v.slice(e);
+  const p = ta.value.indexOf(PLATZ, s);
+  if (p >= 0 && p < s + neu.length) ta.setSelectionRange(p, p + 1);
+  else { cursor = s + neu.length; ta.setSelectionRange(cursor, cursor); }
+  ta.dispatchEvent(new Event("input"));
+  ta.focus();
+}
+
+// ---------------------------------------------------------------- Berechnen
+async function berechne(z) {
+  const i = index(z);
+  if (!z.text.trim()) return;
+  z.meldung.hidden = false; z.meldung.className = "meldung info"; z.meldung.textContent = "rechnet …";
+  const r = await api("/api/berechne", { zeilen: Z.map(y => y.text), index: i });
+  z.meldung.className = "meldung";
+  z.ergebnis = r;
+  if (!r.fehler) { satz(z); }
+  if (document.activeElement === z.ta) { z.ta.blur(); }
+  zeigeSatz(z);
+  return r;
+}
+async function alleBerechnen() { for (const z of Z) if (z.text.trim()) await berechne(z); }
+
+// ---------------------------------------------------------------- Übergabe an LibreOffice
+function quelle(i) { return { v: 1, zeilen: Z.map(y => y.text), zeile: i, berechnet: Z.map(y => !!(y.ergebnis && !y.ergebnis.fehler)) }; }
+async function formelVon(z) {
+  if (z.ergebnis && !z.ergebnis.fehler) return z.ergebnis.starmath;
+  if (!z.satz || z.fehler) await satz(z);
+  return z.satz && !z.fehler ? z.satz.starmath : null;
+}
+async function uebernehmen(z) {
+  const sm = await formelVon(z);
+  if (!sm) { toast("Diese Zeile enthält einen Fehler und kann nicht übernommen werden."); return; }
+  await api("/api/uebergabe", { starmath: sm, quelle: quelle(index(z)), titel: z.text });
+  toast("Bereit – in LibreOffice „Formeleditor → Formel einfügen“ (oder „Formel aktualisieren“) wählen.");
+}
+async function blattUebernehmen() {
+  const teile = [];
+  for (const z of Z) { if (!z.text.trim()) continue; const sm = await formelVon(z); if (sm) teile.push(sm); }
+  if (!teile.length) { toast("Keine Zeilen zum Übernehmen."); return; }
+  await api("/api/uebergabe", { starmath: teile.join(" newline "), quelle: Object.assign(quelle(-1), { alle: true }), titel: Z.map(z => z.text).join(" | ") });
+  toast("Alle Zeilen bereit – in LibreOffice „Formeleditor → Formel einfügen“ wählen.");
+}
+// Kopieren: Safari (iPad) verlangt, dass der Kopierauftrag sofort im Tipp-Ereignis entsteht → ClipboardItem mit Promise
+function kopiere(textVersprechen, erfolg) {
+  const fertig = () => toast(erfolg);
+  const notfalls = async () => { const t = await textVersprechen; if (t) zeigeKopierDialog(t); };
+  try {
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      const blob = textVersprechen.then(t => { if (!t) throw new Error("leer"); return new Blob([t], { type: "text/plain" }); });
+      navigator.clipboard.write([new ClipboardItem({ "text/plain": blob })]).then(fertig, notfalls);
+      return;
+    }
+  } catch {}
+  textVersprechen.then(t => navigator.clipboard.writeText(t)).then(fertig, notfalls);
+}
+function zeigeKopierDialog(t) {
+  const d = $("kopierDialog"), ta = $("kopierText");
+  ta.value = t; d.showModal(); ta.focus(); ta.select();
+}
+$("kopierOk").addEventListener("click", () => $("kopierDialog").close());
+
+function kopiereTex(z) {
+  const tex = z.ergebnis && !z.ergebnis.fehler ? z.ergebnis.latex : (z.satz && z.satz.latex) || z.text;
+  kopiere(Promise.resolve(tex), "LaTeX kopiert.");
+}
+
+// ---------------------------------------------------------------- Pages, Keynote, Numbers
+const VERLAUF = "formeleditor.iwork";
+function texVon(z) { return z.ergebnis && !z.ergebnis.fehler ? z.ergebnis.latex : (z.satz && !z.fehler ? z.satz.latex : null); }
+function normTex(t) { return t.split(/\r?\n/).filter(l => !l.trim().startsWith("%")).join(" ").replace(/\s+/g, "").trim(); }
+async function iworkTex(z) {
+  let tex, q;
+  if (z) {
+    if (!z.satz || z.fehler) await satz(z);
+    tex = texVon(z); q = quelle(index(z));
+  } else {
+    const teile = [];
+    for (const y of Z) { if (!y.text.trim()) continue; if (!y.satz) await satz(y); const t = texVon(y); if (t) teile.push(t); }
+    tex = teile.length > 1 ? "\\begin{gathered}" + teile.join(" \\\\ ") + "\\end{gathered}" : teile[0];
+    q = Object.assign(quelle(-1), { alle: true });
+  }
+  if (!tex) return null;
+  const r = await api("/api/iwork_latex", { latex: tex, quelle: q });
+  merkeVerlauf(r.latex, q, tex);
+  return r.latex;
+}
+function iworkKopieren(z) {
+  kopiere(iworkTex(z).then(t => { if (!t) toast("Diese Zeile enthält einen Fehler."); return t; }),
+    "Kopiert – in Pages/Keynote/Numbers: Einfügen → Gleichung …, einsetzen, „Einfügen“.");
+}
+async function iworkDirekt(z) {
+  const tex = await iworkTex(z);
+  if (!tex) { toast("Diese Zeile enthält einen Fehler."); return; }
+  const app = $("iworkApp").value;
+  toast("Füge in " + app + " ein …");
+  const r = await api("/api/iwork_formel", { app, latex: tex });
+  toast(r.fehler ? r.fehler : "In " + app + " eingefügt.");
+}
+function verlauf() { try { return JSON.parse(localStorage.getItem(VERLAUF) || "[]"); } catch { return []; } }
+function merkeVerlauf(latex, q, anzeige, fp) {
+  const n = normTex(latex);
+  const alt = verlauf(), frueher = alt.find(e => e.n === n);
+  const v = alt.filter(e => e.n !== n);
+  v.unshift({ n, q, anzeige, zeit: Date.now(), fp: fp || (frueher && frueher.fp) || null });
+  try { localStorage.setItem(VERLAUF, JSON.stringify(v.slice(0, 60))); } catch {}
+}
+async function iworkLaden() {
+  const text = $("ladeText").value;
+  if (!text.trim()) return;
+  let q = (await api("/api/iwork_quelle", { text })).quelle;
+  if (!q) { const e = verlauf().find(e => e.n === normTex(text)); if (e) q = e.q; }
+  if (!q) { toast("In diesem Text steckt keine Formeleditor-Quelle – die Gleichung wurde nicht hier erzeugt."); return; }
+  $("ladeDialog").close();
+  await ladeQuelle(q, "Gleichung aus iWork geladen.");
+}
+function zeigeLadeDialog() {
+  $("ladeText").value = "";
+  const box = $("verlauf"); box.innerHTML = "";
+  const v = verlauf();
+  if (!v.length) box.innerHTML = "<p>Noch keine Gleichungen erzeugt.</p>";
+  for (const e of v.slice(0, 25)) {
+    const b = document.createElement("button");
+    const f = document.createElement("span"); setze(f, e.anzeige || "", false);
+    const k = document.createElement("small"); k.textContent = new Date(e.zeit).toLocaleString("de-DE") + " · " + (e.q.zeilen || []).filter(t => t.trim()).length + " Zeile(n)";
+    b.append(f, k);
+    b.addEventListener("click", () => { $("ladeDialog").close(); ladeQuelle(e.q, "Gleichung geladen."); });
+    box.appendChild(b);
+  }
+  $("ladeDialog").showModal();
+}
+$("iworkKopieren").addEventListener("mousedown", e => e.preventDefault());
+$("iworkKopieren").addEventListener("click", () => Z[aktiv] && iworkKopieren(Z[aktiv]));
+$("iworkAlle").addEventListener("click", () => iworkKopieren(null));
+$("iworkEinfuegen").addEventListener("mousedown", e => e.preventDefault());
+$("iworkEinfuegen").addEventListener("click", () => Z[aktiv] && iworkDirekt(Z[aktiv]));
+$("iworkLaden").addEventListener("click", zeigeLadeDialog);
+$("ladeOk").addEventListener("click", iworkLaden);
+$("ladeAbbrechen").addEventListener("click", () => $("ladeDialog").close());
+async function iworkApps() {
+  try {
+    const r = await api("/api/iwork_apps");
+    if (r.apps && r.apps.length && !r.apps.includes($("iworkApp").value)) $("iworkApp").value = r.apps[0];
+  } catch {}
+}
+$("iworkApp").addEventListener("focus", iworkApps);
+
+// ---------------------------------------------------------------- Ziehen in andere Apps (iPad, Mac) und zurück
+const ZIEH = { schluessel: null, url: null, q: null, tex: null, fp: null, nr: 0 };
+function editorLink(q) { return location.origin + location.pathname + "#quelle=" + encodeURIComponent(JSON.stringify(q)); }
+async function ziehAktualisieren() {
+  const z = Z[aktiv], feld = $("ziehFeld");
+  const tex = z && z.text.trim() ? texVon(z) : null;
+  if (!tex) { feld.hidden = true; ZIEH.schluessel = null; return; }
+  const q = quelle(index(z)), schluessel = tex + "\u0001" + JSON.stringify(q);
+  if (schluessel === ZIEH.schluessel) return;
+  ZIEH.schluessel = schluessel;
+  const nr = ++ZIEH.nr;
+  try {
+    const roh = await Formelbild.zeichne(tex, { skala: 3 });
+    const png = await Ziehen.pngMitText(roh, "Formeleditor", encodeURIComponent(JSON.stringify(q)));
+    const fp = await Ziehen.fingerabdruck(png);
+    if (nr !== ZIEH.nr) return;
+    if (ZIEH.url) URL.revokeObjectURL(ZIEH.url);
+    Object.assign(ZIEH, { url: URL.createObjectURL(png), q, tex, fp, png });
+    $("ziehBild").src = ZIEH.url;
+    $("ziehLink").href = editorLink(q);
+    feld.hidden = false;
+  } catch (e) { console.warn("Formelbild:", e); feld.hidden = true; }
+}
+setInterval(ziehAktualisieren, 700);
+$("ziehBild").addEventListener("dragstart", e => {
+  if (!ZIEH.q) return;
+  try { e.dataTransfer.effectAllowed = "copy"; } catch {}
+  merkeVerlauf(ZIEH.tex, ZIEH.q, ZIEH.tex, ZIEH.fp);
+});
+$("ziehLink").addEventListener("dragstart", e => { try { e.dataTransfer.setData("text/plain", $("ziehLink").href); } catch {} if (ZIEH.q) merkeVerlauf(ZIEH.tex, ZIEH.q, ZIEH.tex, ZIEH.fp); });
+$("ziehLink").addEventListener("click", e => { e.preventDefault(); toast("Den Link in die andere App ziehen – dort antippen öffnet die Formel wieder hier."); });
+
+function quelleAusText(t) {
+  const m = /[#&]quelle=([^&\s]+)/.exec(t || "");
+  if (m) { try { return JSON.parse(decodeURIComponent(m[1])); } catch {} }
+  return null;
+}
+Ziehen.abwurfzone(async ({ datei, text, url }) => {
+  let q = quelleAusText(url) || quelleAusText(text);
+  const t = text || url;
+  if (!q && t && /%FE1:/.test(t)) q = (await api("/api/iwork_quelle", { text: t })).quelle;
+  if (!q && t && !datei) { const e = verlauf().find(e => e.n === normTex(t)); if (e) q = e.q; }
+  if (!q && datei && /png|image/i.test((datei.type || "") + datei.name)) {
+    const roh = Ziehen.pngText(await datei.arrayBuffer())["Formeleditor"];
+    if (roh) { try { q = JSON.parse(decodeURIComponent(roh)); } catch {} }
+    if (!q) { const e = Ziehen.suche(await Ziehen.fingerabdruck(datei), verlauf().filter(e => e.fp), 0.12, 0.04); /* Formelbilder sind klein → großzügiger, aber eindeutig */ if (e) q = e.q; }
+  }
+  if (!q) { toast("Das ist keine Formel aus dem Formeleditor (oder sie wurde auf einem anderen Gerät erzeugt – dann den Link benutzen)."); return; }
+  await ladeQuelle(q, "Formel wieder geöffnet – nach dem Bearbeiten das neue Bild hinüberziehen.");
+}, $("abwurf"));
+async function ladeAusAdresse() {
+  const q = quelleAusText(location.hash);
+  if (!q) return false;
+  history.replaceState(null, "", location.pathname + location.search);
+  await ladeQuelle(q, "Formel aus dem Link geöffnet.");
+  return true;
+}
+window.addEventListener("hashchange", ladeAusAdresse);
+
+// ---------------------------------------------------------------- Blatt laden / sichern
+async function ladeQuelle(q, text) {
+  Z.splice(0).forEach(z => z.el.remove());
+  const zeilen = q.zeilen && q.zeilen.length ? q.zeilen : [""];
+  zeilen.forEach(t => neueZeile(Z.length - 1, t));
+  await Promise.all(Z.map(z => satz(z)));
+  Z.forEach(zeigeSatz);
+  const i = q.zeile >= 0 ? Math.min(q.zeile, Z.length - 1) : 0;
+  if (q.berechnet) for (let j = 0; j < Z.length; j++) if (q.berechnet[j]) await berechne(Z[j]);
+  bearbeiten(Z[i]);
+  merkeBlatt();
+  if (text) toast(text);
+}
+let blattUhr = null;
+function merkeBlatt() {
+  clearTimeout(blattUhr);
+  blattUhr = setTimeout(() => { try { localStorage.setItem("formeleditor.blatt", JSON.stringify(Z.map(z => z.text))); } catch {} }, 400);
+}
+
+// Bearbeitungsaufträge aus LibreOffice
+async function auftragPruefen() {
+  try {
+    const r = await api("/api/auftrag");
+    if (!r.auftrag) return;
+    await ladeQuelle(r.auftrag, "Formel aus LibreOffice geladen.");
+  } catch {}
+}
+
+// ---------------------------------------------------------------- Start
+$("berechne").addEventListener("mousedown", e => e.preventDefault());
+$("berechne").addEventListener("click", () => Z[aktiv] && berechne(Z[aktiv]));
+$("alleBerechnen").addEventListener("click", alleBerechnen);
+$("uebernehmen").addEventListener("mousedown", e => e.preventDefault());
+$("uebernehmen").addEventListener("click", () => Z[aktiv] && uebernehmen(Z[aktiv]));
+$("blattUebernehmen").addEventListener("click", blattUebernehmen);
+$("neueZeile").addEventListener("click", () => bearbeiten(neueZeile()));
+document.addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && Z[aktiv]) { e.preventDefault(); berechne(Z[aktiv]); } });
+
+(async () => {
+  let beispiele = ["f(x) := x^3 - 4x", "diff(f(x); x)", "integrate(f(x); x; 0; 2)", "solve(f(x) = 0; x)"];
+  try { const g = JSON.parse(localStorage.getItem("formeleditor.blatt") || "null"); if (Array.isArray(g) && g.some(t => t.trim())) beispiele = g; } catch {}
+  beispiele.forEach(t => neueZeile(Z.length - 1, t));
+  Z.forEach(zeigeSatz);
+  await bereit;
+  const server = MODUS.art === "server";
+  $("loGruppe").hidden = !server;
+  $("zumExplorer").href = server ? "/explorer/" : "../explorer/";
+  document.body.classList.toggle("browser", !server);
+  if (!server) $("kern").textContent = "Python wird im Browser geladen …";
+  await Promise.all(Z.map(z => satz(z)));
+  Z.forEach(zeigeSatz);
+  ladeVorlagen();
+  await ladeAusAdresse();
+  const info = await api("/api/info");
+  const k = $("kern");
+  MODUS.mac = !!info.mac;
+  $("macGruppe").hidden = !MODUS.mac;
+  if (MODUS.mac) iworkApps();
+  if (!info.sympy) { k.textContent = "SymPy fehlt – nur Formelsatz möglich"; k.classList.add("fehlt"); }
+  else { k.classList.remove("fehlt"); k.textContent = (server ? "" : "Im Browser · ") + `Python ${info.python} · SymPy ${info.sympy} · NumPy ${info.numpy || "–"} · SciPy ${info.scipy || "–"}`; }
+  if (server) { auftragPruefen(); setInterval(auftragPruefen, 1200); }
+})();
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("../sw.js").catch(() => {});
+window.formeleditor = { Z, berechne, uebernehmen, einfuegen, neueZeile, bearbeiten, iworkTex, ladeQuelle, MODUS, api, ZIEH, ziehAktualisieren, verlauf };
+</script>
+</body>
+</html>

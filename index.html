@@ -3,145 +3,50 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mathelernplatform – Analysis 11</title>
-<script defer src="https://unpkg.com/mathlive@0.109.0"></script>
-<script>
-window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]}};
-</script>
-<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<meta name="theme-color" content="#0e0f12">
+<title>Formeleditor und Funktionen-Explorer</title>
+<link rel="apple-touch-icon" href="formeleditor/icon-180.png">
 <style>
-:root{font-family:system-ui,-apple-system,sans-serif;color:#1c2b43;background:#f4f6fb}
-body{margin:0}main{max-width:800px;margin:34px auto;padding:0 16px}
-article{background:white;border:1px solid #dce3ef;border-radius:18px;padding:26px;box-shadow:0 8px 25px #22334d0a}
-h1{margin:0 0 6px}h2{font-size:1.2rem}p{line-height:1.6}
-.kicker{color:#566c8a;font-weight:650;margin:0 0 15px}
-.problem{font-size:1.5rem;padding:12px 0}
-math-field{display:block;min-height:54px;font-size:1.5rem;border:1px solid #a8b8cf;border-radius:10px;padding:9px;margin:14px 0}
-button{background:#2157a3;color:white;border:0;border-radius:9px;padding:12px 16px;font-size:1rem;font-weight:600;margin:4px 8px 4px 0;cursor:pointer}
-button.secondary{background:#e7edf7;color:#203650}
-button:disabled{opacity:.5;cursor:wait}
-#status{background:#edf3fc;border-radius:10px;padding:13px;margin:15px 0}
-#status.ok{background:#e8f7ee;color:#17643b}#status.bad{background:#fff0ef;color:#902929}
-.panel{border-top:1px solid #e0e6f0;margin-top:20px;padding-top:15px}
-.hidden{display:none}small{color:#5e6e82}
-.step{background:#f8faff;border:1px solid #dce3ef;border-radius:12px;padding:14px;margin:12px 0}
-.step math-field{margin:8px 0}
-.step-actions{display:flex;gap:6px;flex-wrap:wrap}
-.step-actions button{font-size:.9rem;padding:9px 12px}
-.step-result{min-height:1.3em;margin-top:8px;font-size:.94rem}
-.step-result.ok{color:#17643b}.step-result.bad{color:#902929}
+:root { --bg: #0e0f12; --panel: #17181d; --linie: #2c2e36; --text: #ececec; --dim: #9a9ca6; --akzent: #58C4DD; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+main { max-width: 880px; margin: 0 auto; padding: 32px 16px 48px; }
+h1 { font-size: 26px; margin: 0 0 6px; } h1 span { color: var(--akzent); }
+p.unter { color: var(--dim); margin: 0 0 26px; }
+.kacheln { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+a.kachel { display: flex; gap: 16px; align-items: center; padding: 18px; border: 1px solid var(--linie); border-radius: 16px; background: var(--panel); color: inherit; text-decoration: none; }
+a.kachel:hover { border-color: var(--akzent); }
+a.kachel img { width: 72px; height: 72px; border-radius: 16px; flex: none; }
+a.kachel b { font-size: 17px; display: block; } a.kachel small { color: var(--dim); }
+h2 { font-size: 16px; margin: 32px 0 8px; }
+ol, ul { padding-left: 20px; color: var(--dim); } li { margin: 4px 0; } li b { color: var(--text); }
+footer { margin-top: 32px; color: var(--dim); font-size: 12px; }
 </style>
 </head>
 <body>
-<main><article>
-<p class="kicker">Mathematik · Jahrgangsstufe 11 · Analysis</p>
-<h1>Ableitungen – Potenzregel</h1><p class="kicker">Version 0.2 · Rechenschritte und Fehlerdiagnose</p>
-<p>Bestimme die erste Ableitung der Funktion:</p>
-<div class="problem">\(f(x)=3x^3-2x^2+5x-1\)</div>
-<section class="panel" aria-labelledby="stepsTitle">
-<h2 id="stepsTitle">1. Schrittweise ableiten</h2>
-<p>Leite jeden Summanden einzeln ab. Du kannst jeden Schritt prüfen und bis zu drei aufeinander aufbauende Hinweise abrufen.</p>
-<div id="steps"></div>
-</section>
-<section class="panel">
-<h2>2. Gesamtergebnis</h2>
-<label for="answer"><strong>Setze die Ableitungen zusammen und vereinfache:</strong></label>
-</section>
-<math-field id="answer" virtual-keyboard-mode="onfocus" aria-label="Ableitungsfunktion eingeben"></math-field>
-<div>
-<button id="check" disabled>Mit SymPy prüfen</button>
-<button id="hint" class="secondary" disabled>Hinweis</button>
-<button id="show" class="secondary" disabled>Musterlösung</button>
-</div>
-<div id="status" role="status" aria-live="polite">Python und SymPy werden geladen. Beim ersten Aufruf kann das etwas dauern …</div>
-<div id="hintPanel" class="panel hidden"></div>
-<div id="solution" class="panel hidden"></div>
-<p><small>Alle Berechnungen erfolgen mit echtem Python und SymPy auf deinem Gerät. Die Eingaben werden nicht an einen Rechenserver geschickt. Für das erstmalige Laden ist Internet erforderlich.</small></p>
-</article></main>
-<script type="module">
-import {loadPyodide} from "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.mjs";
-const $=id=>document.getElementById(id);
-const status=$("status"), check=$("check"), hint=$("hint"), show=$("show"), answer=$("answer");
-function setStatus(text,kind=""){status.className=kind;status.textContent=text;}
-let py;
-const stepNames=["3x^3","-2x^2","5x","-1"];
-const hintLevels=[0,0,0,0];
-const stepsContainer=$("steps");
-stepNames.forEach((name,i)=>{
-  const card=document.createElement("div");
-  card.className="step";
-  const label=document.createElement("div");
-  label.textContent=`Summand ${i+1}: ${name}`;
-  const field=document.createElement("math-field");
-  field.id=`step-${i}`;
-  field.setAttribute("aria-label",`Ableitung von Summand ${i+1}`);
-  const actions=document.createElement("div");
-  actions.className="step-actions";
-  const verify=document.createElement("button");
-  verify.className="step-check";verify.disabled=true;verify.textContent="Schritt prüfen";
-  const help=document.createElement("button");
-  help.className="step-hint secondary";help.disabled=true;help.textContent="Hinweis 1";
-  const feedback=document.createElement("div");
-  feedback.className="step-result";feedback.setAttribute("role","status");
-  verify.onclick=async()=>{
-    verify.disabled=true;
-    try{
-      py.globals.set("step_input",field.getValue("ascii-math"));
-      py.globals.set("step_index",i);
-      const result=JSON.parse(await py.runPythonAsync("check_step(step_index, step_input)"));
-      feedback.className="step-result "+(result.status==="correct"?"ok":result.status==="incorrect"?"bad":"");
-      feedback.textContent=result.message;
-    }catch(e){feedback.textContent="Fehler bei der Prüfung.";console.error(e)}
-    finally{verify.disabled=false}
-  };
-  help.onclick=async()=>{
-    hintLevels[i]=Math.min(3,hintLevels[i]+1);
-    py.globals.set("hint_index",i);py.globals.set("hint_level",hintLevels[i]);
-    const result=JSON.parse(await py.runPythonAsync("step_hint(hint_index,hint_level)"));
-    feedback.className="step-result";feedback.textContent=`Hinweis ${result.level}: ${result.message}`;
-    help.textContent=hintLevels[i]<3?`Hinweis ${hintLevels[i]+1}`:"Hinweise ausgeschöpft";
-    help.disabled=hintLevels[i]>=3;
-  };
-  actions.append(verify,help);card.append(label,field,actions,feedback);stepsContainer.append(card);
-});
-try {
-  py=await loadPyodide();
-  await py.loadPackage("sympy");
-  const response=await fetch("./math_engine.py");
-  if(!response.ok)throw new Error("math_engine.py nicht erreichbar");
-  const engine=await response.text();
-  await py.runPythonAsync(engine);
-  [check,hint,show,...document.querySelectorAll(".step-check,.step-hint")].forEach(b=>b.disabled=false);
-  setStatus("Python und SymPy sind geladen. Du kannst deine Ableitung prüfen.","ok");
-} catch(err) {
-  setStatus("Der Python-Rechenkern konnte nicht geladen werden. Bitte Internetverbindung und Veröffentlichung der Projektdateien prüfen.","bad");
-  console.error(err);
-}
-check.onclick=async()=>{
-  check.disabled=true;
-  try{
-    // MathLive liefert die Eingabe als AsciiMath; Auswertung erfolgt ausschließlich in Python.
-    const input=answer.getValue("ascii-math");
-    py.globals.set("student_input",input);
-    const result=JSON.parse(await py.runPythonAsync("check_answer(student_input)"));
-    setStatus(result.message,result.status==="correct"?"ok":result.status==="incorrect"?"bad":"");
-  }catch(err){setStatus("Bei der Prüfung ist ein Fehler aufgetreten.","bad");console.error(err)}
-  finally{check.disabled=false}
-};
-hint.onclick=()=>{
-  $("hintPanel").classList.remove("hidden");
-  $("hintPanel").innerHTML="<h2>Hinweis</h2><p>Leite jeden Summanden einzeln ab. Für \\(ax^n\\) gilt \\((ax^n)'=anx^{n-1}\\). Die Ableitung einer Konstanten ist null.</p>";
-  window.MathJax?.typesetPromise?.([$("hintPanel")]);
-};
-show.onclick=async()=>{
-  const result=JSON.parse(await py.runPythonAsync("worked_solution()"));
-  $("solution").classList.remove("hidden");
-  $("solution").innerHTML="<h2>Kommentierte Musterlösung</h2>"+
-    "<p>Wir verwenden die Summenregel und leiten jeden Summanden einzeln ab:</p>"+
-    result.steps.map((step,i)=>"<p>"+(i+1)+". \\("+step.source+"\\) wird zu \\("+step.derivative+"\\).</p>").join("")+
-    "<p><strong>Ergebnis:</strong> \\(f'(x)="+result.answer+"\\)</p>";
-  window.MathJax?.typesetPromise?.([$("solution")]);
-};
-</script>
+<main>
+  <h1>Formel<span>editor</span> &amp; Funktionen-Explorer</h1>
+  <p class="unter">Für Pages, Keynote und Numbers auf iPad und Mac – Version 1.3.1</p>
+  <div class="kacheln">
+    <a class="kachel" href="formeleditor/"><img src="formeleditor/icon-180.png" alt=""><span><b>Formeleditor</b><small>Formeln setzen und mit SymPy, NumPy, SciPy berechnen; als Gleichung nach iWork</small></span></a>
+    <a class="kachel" href="explorer/"><img src="explorer/icon-180.png" alt=""><span><b>Funktionen-Explorer</b><small>Graphen, Nullstellen, Extrema, Wendestellen, Integrale; als Bild nach iWork</small></span></a>
+  </div>
+  <h2>Auf den Home-Bildschirm (iPad)</h2>
+  <ol><li>Programm oben antippen.</li><li>In Safari <b>Teilen</b> (□↑) → <b>Zum Home-Bildschirm</b> → <b>Hinzufügen</b>.</li>
+  <li>Einmal mit Internet öffnen und warten, bis oben „Python … SymPy …“ steht – danach geht es auch offline.</li></ol>
+  <h2>In Pages, Keynote, Numbers</h2>
+  <ul><li><b>Formel:</b> „⧉ Für Pages/Keynote/Numbers“ → in iWork <b>Einfügen → Gleichung</b> (iPad: <b>+ → Form…/Gleichung</b>) → einsetzen → <b>Einfügen</b>.</li>
+  <li><b>Formel bearbeiten:</b> Gleichung in iWork öffnen, Text kopieren → im Formeleditor „⟲ Aus iWork laden“.</li>
+  <li><b>Grafik:</b> „⧉ Bild kopieren“ → im Dokument einsetzen; „⟲ Grafik öffnen …“ oder „Verlauf“ zum Weiterbearbeiten.</li></ul>
+  <h2>Herunterladen</h2>
+  <ul>
+    <li><a href="downloads/Formeleditor-Mac.zip"><b>Formeleditor-Mac.zip</b></a> – Mac-Programm mit LibreOffice-Erweiterung (installieren.command doppelklicken)</li>
+    <li><a href="downloads/funktionen-explorer.oxt"><b>funktionen-explorer.oxt</b></a> – Funktionen-Explorer für LibreOffice (Extras → Erweiterungen → Hinzufügen)</li>
+    <li><a href="downloads/Funktionen-Explorer-Python.zip"><b>Funktionen-Explorer-Python.zip</b></a> – Python-Fassung (funktionen_explorer.py, polynom_explorer.py, herleitung.py)</li>
+    <li><a href="downloads/funktionen-explorer.html"><b>funktionen-explorer.html</b></a> und <a href="downloads/polynom-explorer.html"><b>polynom-explorer.html</b></a> – eigenständige Dateien für jeden Browser</li>
+  </ul>
+  <footer>Rechnen im Browser mit Pyodide (Python für WebAssembly). Alle Daten bleiben auf dem Gerät.</footer>
+</main>
+<script>if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});</script>
 </body>
 </html>

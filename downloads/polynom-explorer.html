@@ -1,0 +1,2233 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Polynom-Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Koordinatensystem als Bühne links, Steuerpult rechts; auf dem Handy untereinander.
+   Zwei Darstellungen, umschaltbar über „Darstellung“: dunkel (3Blue1Brown-Stil, Standard) und
+   hell (Farbschema der Pearson-Mathematikbücher). */
+:root {
+  --bg: #07090b;
+  --stage: #000000;
+  --panel: #0e1318;
+  --field: #161d24;
+  --field-hover: #1d2730;
+  --line: #24313c;
+  --fg: #ececec;
+  --dim: #8d99a4;
+  --graph: #58C4DD;      /* BLUE_C */
+  --grid: #29ABCA;       /* BLUE_D */
+  --grid-fine: #1C758A;  /* BLUE_E */
+  --null: #FC6255;       /* RED_C */
+  --ext: #FFFF00;        /* YELLOW_C */
+  --wende: #83C167;      /* GREEN_C */
+  --int-pos: #5CD0B3;    /* TEAL_C */
+  --int-neg: #C55F73;    /* MAROON_C */
+  --t-hoch: #F0AC5F;     /* GOLD_C   – Tangenten an Hochpunkten */
+  --t-tief: #B189C6;     /* PURPLE_B – Tangenten an Tiefpunkten */
+  --t-wende: #E46FD0;    /* PINK     – Wende-/Sattel-Tangenten */
+  --t-frei: #FF862F;     /* ORANGE   – frei verschiebbare Tangente in P */
+  --sekante: #C8E64C;    /* Sekante durch A und B mit Steigungsdreieck */
+  --trace: #E8E8E8;      /* Trace-Modus: Senkrechte und Punkt auf der x-Achse */
+  --schnitt: #F5A3FF;    /* Schnittpunkte der Graphen */
+  --yachse: #7FE3FF;     /* y-Achsenabschnitte */
+  --summe: #FFC857;      /* Riemann-Summen: Rechtecke/Trapeze über der x-Achse */
+  --summe-neg: #FF7A90;  /* … unter der x-Achse */
+  --summe-alpha: 0.30;
+  --k-F: #BBBBBB;        /* GREY_B   – Stammfunktion F */
+  --k-d1: #9A72AC;       /* PURPLE_C – 1. Ableitung f′ */
+  --k-d2: #CD853F;       /* LIGHT_BROWN – 2. Ableitung f″ */
+  --k-d3: #D147BD;       /* PINK_D   – 3. Ableitung f‴ */
+  --g-graph: #FF8F6B;    /* zweite Funktion g und ihre Kurvenfamilie */
+  --g-F: #C9A88E;
+  --g-d1: #E6B450;
+  --g-d2: #7FD1AE;
+  --g-d3: #F28FB0;
+  --on-chip: #05080a;
+  --kontur: #000000;          /* Rand der Punkte und Marken */
+  --label-bg: rgba(0, 0, 0, 0.72);
+  --marke-text: #04110d;
+  --stuetz: #ffffff;
+  --stuetz-fill: rgba(0, 0, 0, 0.55);
+  --flaeche-pos: 0.38;
+  --flaeche-neg: 0.45;
+  --gitter-alpha: 0.6;
+  --gitter-fein-alpha: 0.45;
+  --glanz: 0.18;
+  --graph-lw: 3.2;
+  --pfeile: 0;
+  --font-math: "STIX Two Text", "Latin Modern Roman", "Cambria Math", "Times New Roman", serif;
+  --font-ui: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+:root[data-design="pearson"] {
+  --bg: #eef1f9;
+  --stage: #ffffff;
+  --panel: #ffffff;
+  --field: #f4f6fb;
+  --field-hover: #e7edfc;
+  --line: #dbe0ee;
+  --fg: #1b2030;
+  --dim: #5b6478;
+  --graph: #2454c9;
+  --grid: #aab8d4;
+  --grid-fine: #d5dced;
+  --null: #0e7c66;
+  --ext: #b23064;
+  --wende: #6d3fb0;
+  --int-pos: #2454c9;
+  --int-neg: #b5620a;
+  --t-hoch: #b5620a;
+  --t-tief: #0e7490;
+  --t-wende: #8a6d1d;
+  --t-frei: #d9480f;
+  --sekante: #4d7c0f;
+  --trace: #334155;
+  --schnitt: #7c3aed;
+  --yachse: #0369a1;
+  --summe: #c026d3;
+  --summe-neg: #be123c;
+  --summe-alpha: 0.2;
+  --k-F: #5b6478;
+  --k-d1: #0e7490;
+  --k-d2: #b5620a;
+  --k-d3: #8a6d1d;
+  --g-graph: #c2410c;
+  --g-F: #8a7766;
+  --g-d1: #a16207;
+  --g-d2: #047857;
+  --g-d3: #be185d;
+  --on-chip: #ffffff;
+  --kontur: #ffffff;
+  --label-bg: rgba(255, 255, 255, 0.88);
+  --marke-text: #ffffff;
+  --stuetz: #1b2030;
+  --stuetz-fill: #ffffff;
+  --flaeche-pos: 0.16;
+  --flaeche-neg: 0.22;
+  --gitter-alpha: 0.6;
+  --gitter-fein-alpha: 0.45;
+  --glanz: 0;
+  --graph-lw: 2.6;
+  --pfeile: 1;
+  color-scheme: light;
+}
+:root[data-design="pearson"] .panel { box-shadow: 0 1px 3px rgba(20, 30, 60, 0.07); border-radius: 10px; }
+:root[data-design="pearson"] .canvas-wrap { border-radius: 10px; }
+.design { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.design button {
+  font: 600 13px var(--font-ui); padding: 8px 6px; cursor: pointer; border: 0; background: var(--field); color: var(--dim);
+}
+.design button + button { border-left: 1px solid var(--line); }
+.design button:hover { background: var(--field-hover); color: var(--fg); }
+.design button[aria-checked="true"] { background: var(--graph); color: var(--on-chip); }
+.design button:focus-visible { outline: 2px solid var(--fg); outline-offset: -2px; }
+/* Bearbeiten: f | g */
+.wahl { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.wahl button { font: 600 13px var(--font-ui); padding: 8px 6px; cursor: pointer; border: 0; background: var(--field); color: var(--dim); }
+.wahl button i { font-family: var(--font-math); font-size: 16px; }
+.wahl button + button { border-left: 1px solid var(--line); }
+.wahl button:hover { background: var(--field-hover); color: var(--fg); }
+.wahl button[aria-checked="true"] { background: var(--graph); color: var(--on-chip); }
+.wahl button[data-fn="g"][aria-checked="true"] { background: var(--g-graph); }
+.wahl button:focus-visible { outline: 2px solid var(--fg); outline-offset: -2px; }
+.label i { font-family: var(--font-math); text-transform: none; font-size: 14px; letter-spacing: 0; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14px; }
+.app {
+  display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px;
+  height: 100%; box-sizing: border-box;
+  padding-block: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.stage { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; }
+.term {
+  font-family: var(--font-math); font-size: clamp(20px, 2.4vw, 30px); line-height: 1.5;
+  min-height: 1.6em; padding-bottom: 2px; flex: none;
+}
+.term .var { font-style: italic; }
+.term .tm { white-space: nowrap; }
+.term.lang { font-size: clamp(16px, 1.6vw, 22px); }
+.term sup { font-size: 0.62em; vertical-align: 0.75em; line-height: 0; }
+.term .op { padding: 0 0.22em; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: 0.72em; line-height: 1.1; margin: 0 0.08em; }
+.frac > span:first-child { border-bottom: 1px solid currentColor; padding: 0 0.15em; }
+.canvas-wrap { position: relative; flex: 1; min-height: 320px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: var(--stage); }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+canvas.grab { cursor: grabbing; }
+.hint { color: var(--dim); font-size: 12px; line-height: 1.5; }
+
+.panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+  padding: 16px; display: flex; flex-direction: column; gap: 18px;
+  overflow-y: auto; min-height: 0;
+}
+.section { display: flex; flex-direction: column; gap: 8px; }
+.label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
+.degree { display: grid; grid-template-columns: auto 1fr 2ch; align-items: center; gap: 12px; }
+.degree .n { font-family: var(--font-math); font-style: italic; font-size: 20px; }
+.degree output { font-family: var(--font-math); font-size: 22px; color: var(--ext); text-align: right; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--grid); }
+.coeffs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 8px; }
+.coeffs .field { grid-template-columns: 2em 1fr; gap: 4px; }
+.coeffs .field label { font-size: 16px; }
+.coeffs input[type=text] { padding: 5px 6px; font-size: 13px; }
+.field { display: grid; grid-template-columns: 2.4em 1fr; align-items: center; gap: 6px; }
+.field label { font-family: var(--font-math); font-size: 18px; text-align: right; }
+.field label i { font-style: italic; }
+.field label sub { font-size: 0.65em; }
+input[type=text] {
+  width: 100%; min-width: 0; box-sizing: border-box; font: 500 14px var(--font-mono); color: var(--fg);
+  background: var(--field); border: 1px solid var(--line); border-radius: 3px; padding: 6px 8px;
+  font-variant-numeric: tabular-nums;
+}
+input[type=text]:hover { background: var(--field-hover); }
+input[type=text]:focus { outline: 2px solid var(--grid); outline-offset: 0; }
+input[type=text].bad { border-color: var(--null); }
+.toggles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.toggles .chip { min-width: 0; hyphens: manual; }
+.chip {
+  font: 600 13px var(--font-ui); border-radius: 3px; padding: 8px 10px; cursor: pointer; text-align: left;
+  border: 1px solid var(--c); background: var(--c); color: var(--on-chip);
+  display: flex; align-items: center; gap: 8px;
+}
+.chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--on-chip); flex: none; }
+.chip[aria-pressed="false"] { background: transparent; color: var(--dim); border-color: var(--line); }
+.chip[aria-pressed="false"]::before { background: transparent; border: 1.5px solid var(--c); }
+.chip:focus-visible, .btn:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.bounds { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.btn { font: 500 13px var(--font-ui); color: var(--fg); background: var(--field); border: 1px solid var(--line); border-radius: 3px; padding: 8px 10px; cursor: pointer; }
+.btn:hover { background: var(--field-hover); }
+.results { display: flex; flex-direction: column; gap: 12px; font-family: var(--font-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.results h3 { margin: 0 0 4px; font: 600 12px var(--font-ui); display: flex; align-items: center; gap: 7px; color: var(--fg); }
+.results h3 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.results h3 .count { color: var(--dim); font-weight: 400; }
+.results ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 3px 14px; }
+.results .empty { color: var(--dim); }
+.results .int-row { display: flex; justify-content: space-between; gap: 12px; }
+.results .eqs { flex-direction: column; gap: 4px; }
+.eq { font-family: var(--font-math); font-size: 17px; white-space: nowrap; overflow-x: auto; }
+.eq i { font-style: italic; }
+.eq sub { font-size: 0.66em; }
+.eq .op { padding: 0 0.2em; }
+.eq .frac { font-size: 0.8em; }
+.eq .pt { font-family: var(--font-mono); font-size: 11.5px; color: var(--dim); margin-left: 8px; }
+.toggles.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.chip.wide { width: 100%; }
+.chip.wide small { font-weight: 400; opacity: 0.85; }
+.p-felder { margin-top: 2px; }
+.p-felder .field { grid-template-columns: 3.1em minmax(0, 1fr); }
+.p-felder .field label { white-space: nowrap; }
+.p-hinweis { margin: 0; font-size: 12px; line-height: 1.4; color: var(--dim); }
+.p-hinweis:empty { display: none; }
+.p-hinweis.fehler { color: var(--null); }
+.toggles.three .chip { padding: 8px 7px; gap: 6px; font-size: 12.5px; min-width: 0; }
+@media (max-width: 380px) { .toggles.three { grid-template-columns: 1fr; } }
+
+@media (max-width: 899px) {
+  html, body { height: auto; }
+  .app { grid-template-columns: minmax(0, 1fr); height: auto; }
+  .canvas-wrap { flex: none; height: min(68vh, 560px); }
+  .panel { overflow: visible; }
+}
+@media (max-width: 380px) { .bounds { grid-template-columns: 1fr; } .coeffs { grid-template-columns: 1fr 1fr; } }
+
+/* ---- Funktionsleiste: Stammfunktion, Funktion, 1.–3. Ableitung (Wechselschalter) ---- */
+.var { font-style: italic; }
+.kurven { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; flex: none; }
+.kchip {
+  min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  padding: 5px 4px 6px; border-radius: 3px; cursor: pointer; text-align: center;
+  border: 1px solid var(--c); background: var(--c); color: var(--on-chip); font: 600 11px/1.2 var(--font-ui);
+}
+.kchip .sym { font: 22px/1.1 var(--font-math); }
+.kchip .sym i { font-style: italic; }
+.kchip .txt { hyphens: manual; overflow-wrap: anywhere; }
+.kchip[aria-pressed="false"] { background: transparent; color: var(--dim); border-color: var(--line); }
+.kchip[aria-pressed="false"] .sym { color: var(--c); }
+.kchip:hover { filter: brightness(1.08); }
+.kchip:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.results .kurve-kopf { display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line);
+  font: 16px var(--font-math); color: var(--fg); white-space: nowrap; overflow-x: auto; }
+.results .kurve-kopf .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+.results .kurve-kopf .zusatz { font: 11px var(--font-ui); color: var(--dim); }
+.results .kurve-kopf sup { font-size: 0.62em; vertical-align: 0.75em; line-height: 0; }
+.results .kurve-kopf .op { padding: 0 0.2em; }
+.results .kurve-kopf .tm { white-space: nowrap; }
+/* Termzeilen f und g, Eingabefelder */
+.eingabe { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; }
+.eingabe label { font-family: var(--font-math); font-size: 20px; white-space: nowrap; min-width: 3.4em; }
+.eingabe label i { font-style: italic; }
+.eingabe input { font: 500 15px var(--font-mono); padding: 7px 10px; }
+.status { margin: -4px 0 0; font-size: 12px; color: var(--dim); min-height: 1.2em; }
+.status.fehler { color: var(--null); }
+.tzeile { white-space: normal; }
+.tzeile.tg .var:first-child { color: var(--g-graph); }
+.eingaben { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.eingabe.g label { color: var(--g-graph); }
+.eingabe.g input { grid-column: 2 / -1; }
+.kurven + .kurven { margin-top: -4px; }
+.werkzeuge { display: flex; flex-wrap: wrap; gap: 6px; flex: none; }
+.werkzeuge .chip { padding: 6px 10px; font-size: 12px; }
+.trace-felder { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+.trace-felder .field { display: flex; align-items: center; gap: 6px; }
+.trace-felder .field label { font-size: 16px; white-space: nowrap; }
+.trace-felder input { width: 7.5em; }
+.grenzen { display: inline-flex; flex-direction: column; vertical-align: middle; font-size: 0.6em; line-height: 1.05; margin: 0 0.15em 0 -0.05em; }
+/* ---- Riemann-Summen: Ober-, Unter-, Trapez-, Mittensumme ---- */
+.summen { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.sbtn {
+  min-width: 0; font: 600 12px/1.25 var(--font-ui); padding: 7px 3px; border-radius: 3px; cursor: pointer; text-align: center;
+  border: 1px solid var(--line); background: transparent; color: var(--dim); hyphens: manual; overflow-wrap: anywhere;
+}
+.sbtn:hover { background: var(--field-hover); color: var(--fg); }
+.sbtn[aria-pressed="true"] { background: var(--summe); border-color: var(--summe); color: var(--on-chip); }
+.sbtn:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.grenzfelder { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 10px; align-items: end; }
+.gfeld { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gfeld label { font-size: 11px; line-height: 1.25; color: var(--dim); }
+.gfeld label i { font: italic 15px var(--font-math); color: var(--fg); }
+.sum-tip {
+  position: absolute; z-index: 5; pointer-events: none; max-width: min(300px, calc(100% - 8px)); box-sizing: border-box;
+  padding: 7px 10px; border-radius: 5px; background: var(--panel); border: 1px solid var(--summe); color: var(--fg);
+  font: 12.5px/1.45 var(--font-ui); font-variant-numeric: tabular-nums; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.sum-tip .kopf { font-weight: 600; color: var(--summe); }
+.sum-tip i { font-family: var(--font-math); font-size: 14px; }
+.sum-tip .anteil b { font: 600 14px var(--font-mono); color: var(--summe); }
+.sum-tip .anteil.neg b { color: var(--summe-neg); }
+.sum-tip .dim { color: var(--dim); font-size: 11.5px; }
+.werkzeuge .svg-knopf { margin-left: auto; padding: 6px 12px; font-size: 12px; white-space: nowrap; border-color: var(--grid-fine); }
+.nregler { display: grid; grid-template-columns: auto minmax(0, 1fr) 4.2ch; align-items: center; gap: 10px; flex: none; }
+.nregler label { font-size: 12px; color: var(--dim); white-space: nowrap; }
+.nregler label i { font: italic 16px var(--font-math); color: var(--fg); }
+.nregler input[type=range] { accent-color: var(--summe); min-width: 0; }
+.nregler output { font: 18px var(--font-math); color: var(--summe); text-align: right; font-variant-numeric: tabular-nums; }
+.nregler .skala { grid-column: 2; display: flex; justify-content: space-between; margin-top: -8px; font-size: 10.5px; color: var(--dim); }
+@media (max-width: 380px) { .summen { grid-template-columns: 1fr 1fr; } }
+</style>
+
+<div class="app">
+  <main class="stage">
+    <div class="eingaben">
+      <div class="eingabe"><label for="termF"><i>f</i>(<i>x</i>) =</label><input type="text" id="termF" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="status"></div>
+      <div class="eingabe g"><label for="termG"><i>g</i>(<i>x</i>) =</label><input type="text" id="termG" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="status"></div>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+    <div class="term" id="term" aria-live="polite"></div>
+    <div class="kurven" data-fn="f" role="group" aria-label="Funktion f, Stammfunktion und Ableitungen anzeigen">
+      <button type="button" class="kchip" data-k="F" aria-pressed="false" style="--c: var(--k-F)"><span class="sym"><i>F</i></span><span class="txt">Stamm&shy;funktion</span></button>
+      <button type="button" class="kchip" data-k="f" aria-pressed="true" style="--c: var(--graph)"><span class="sym"><i>f</i></span><span class="txt">Funktion</span></button>
+      <button type="button" class="kchip" data-k="d1" aria-pressed="false" style="--c: var(--k-d1)"><span class="sym"><i>f</i>′</span><span class="txt">1. Ableitung</span></button>
+      <button type="button" class="kchip" data-k="d2" aria-pressed="false" style="--c: var(--k-d2)"><span class="sym"><i>f</i>″</span><span class="txt">2. Ableitung</span></button>
+      <button type="button" class="kchip" data-k="d3" aria-pressed="false" style="--c: var(--k-d3)"><span class="sym"><i>f</i>‴</span><span class="txt">3. Ableitung</span></button>
+    </div>
+    <div class="kurven" data-fn="g" role="group" aria-label="Funktion g, Stammfunktion und Ableitungen anzeigen">
+      <button type="button" class="kchip" data-k="F" aria-pressed="false" style="--c: var(--g-F)"><span class="sym"><i>G</i></span><span class="txt">Stamm&shy;funktion</span></button>
+      <button type="button" class="kchip" data-k="f" aria-pressed="false" style="--c: var(--g-graph)"><span class="sym"><i>g</i></span><span class="txt">Funktion</span></button>
+      <button type="button" class="kchip" data-k="d1" aria-pressed="false" style="--c: var(--g-d1)"><span class="sym"><i>g</i>′</span><span class="txt">1. Ableitung</span></button>
+      <button type="button" class="kchip" data-k="d2" aria-pressed="false" style="--c: var(--g-d2)"><span class="sym"><i>g</i>″</span><span class="txt">2. Ableitung</span></button>
+      <button type="button" class="kchip" data-k="d3" aria-pressed="false" style="--c: var(--g-d3)"><span class="sym"><i>g</i>‴</span><span class="txt">3. Ableitung</span></button>
+    </div>
+    <div class="werkzeuge">
+      <button type="button" class="chip" id="tStuetz" aria-pressed="false" style="--c: var(--stuetz)">Punkte zum Verformen des Graphen</button>
+      <button type="button" class="chip" id="tTrace" aria-pressed="false" style="--c: var(--trace)">Trace-Modus</button>
+      <button type="button" class="chip" id="tPlay" aria-pressed="false" style="--c: var(--trace)">▶ Abspielen</button>
+      <button type="button" class="btn svg-knopf" id="svgSpeichern" title="Inhalt des Grafikfensters als Vektorgrafik (SVG) speichern; der Dateiname nennt die eingeblendeten Kurven und Eigenschaften">⤓ Grafik als SVG speichern</button>
+      <div class="trace-felder" id="traceFelder" hidden>
+        <div class="field"><label for="trX"><i>x</i> =</label><input type="text" id="trX" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="trHinweis"></div>
+        <div class="field"><label for="trY"><i>y</i> = <i class="akt-f">f</i>(<i>x</i>) =</label><input type="text" id="trY" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="trHinweis"></div>
+        <span class="p-hinweis" id="trHinweis" aria-live="polite"></span>
+      </div>
+    </div>
+    <div class="canvas-wrap" id="wrap"><canvas id="cv" aria-label="Koordinatensystem mit dem Graphen des Polynoms"></canvas><div class="sum-tip" id="sumTip" hidden role="status"></div></div>
+    <div class="nregler"><label for="nSlider1">Teilintervalle <i>n</i></label><input type="range" id="nSlider1" min="0" max="1000" step="1" value="301" aria-describedby="sumHinweis"><output for="nSlider1">8</output><span class="skala" aria-hidden="true"><span>1</span><span>10</span><span>100</span><span>1000</span></span></div>
+    <p class="hint">Beim Start ist nur der Graph von f zu sehen – alles Weitere über die Knöpfe einblenden. Termfelder: Polynome wie x^3 - 4x oder (x-1)(x+2)², auch über Grad und Koeffizienten der unter „Bearbeiten“ gewählten Funktion · Weiße bzw. farbige Kreise ziehen: Graph von f bzw. g verformen · Graph ziehen: verschieben · Punkt P (auf f) bzw. Q (auf g) ziehen oder seine Koordinaten eintragen: Tangente gleitet entlang des Graphen · Sekante: A und B ziehen oder ihre Koordinaten eintragen (Steigungsdreieck mit Δx, Δy) · Trace-Modus: Senkrechte bzw. Punkt auf der x-Achse ziehen oder x eintragen – Kurven, die danach eingeschaltet werden, entstehen als Spur hinter dem Trace-Punkt · „▶ Abspielen“ lässt den Trace-Punkt nach rechts laufen · Schnittpunktberechnung: Schnittpunkte aller sichtbaren Graphen · y-Achsenabschnitt: Schnittpunkte mit der y-Achse · Marken a und b auf der x-Achse ziehen: Integrationsgrenzen · Ober-, Unter-, Trapez-, Mittensumme: Knopf drücken, a, b und n eintragen (n auch über die Schieberegler, 1 … 1000) – Zeiger über ein Rechteck bzw. Trapez zeigt seinen Anteil an der Summe (absolut und in Prozent) · „⤓ Grafik als SVG speichern“: Inhalt des Grafikfensters als Vektorgrafik, benannt nach den eingeblendeten Kurven und Eigenschaften · Hintergrund ziehen: Ansicht bewegen · Mausrad oder zwei Finger: Zoom · Funktionsleisten: <i>F</i> … <i>f</i>‴ und <i>G</i> … <i>g</i>‴ einzeln ein- und ausblenden</p>
+  </main>
+
+  <aside class="panel">
+    <div class="section">
+      <span class="label" id="designLabel">Darstellung</span>
+      <div class="design" role="radiogroup" aria-labelledby="designLabel">
+        <button type="button" role="radio" aria-checked="true" data-design="3b1b">dunkel</button>
+        <button type="button" role="radio" aria-checked="false" data-design="pearson">hell</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <span class="label" id="wahlLabel">Bearbeiten (Grad, Koeffizienten, Punkt)</span>
+      <div class="wahl" role="radiogroup" aria-labelledby="wahlLabel">
+        <button type="button" role="radio" aria-checked="true" data-fn="f">Funktion <i>f</i></button>
+        <button type="button" role="radio" aria-checked="false" data-fn="g">Funktion <i>g</i></button>
+      </div>
+    </div>
+
+    <div class="section">
+      <span class="label">Grad des Polynoms <i class="akt-f">f</i></span>
+      <div class="degree">
+        <span class="n">n</span>
+        <input type="range" id="grad" min="0" max="20" step="1" value="3" aria-label="Grad n">
+        <output id="gradOut">3</output>
+      </div>
+    </div>
+
+    <div class="section">
+      <span class="label">Koeffizienten von <i class="akt-f">f</i> · z. B. 0,5 · -3/4 · 1/7! · (-1)^3/3!</span>
+      <div class="coeffs" id="coeffs"></div>
+    </div>
+
+    <div class="section">
+      <span class="label">Anzeigen</span>
+      <div class="toggles">
+        <button class="chip" id="tNull" aria-pressed="false" style="--c: var(--null)">Nullstellen</button>
+        <button class="chip" id="tExt" aria-pressed="false" style="--c: var(--ext)">Extrema</button>
+        <button class="chip" id="tWende" aria-pressed="false" style="--c: var(--wende)">Wendepunkte</button>
+        <button class="chip" id="tInt" aria-pressed="false" style="--c: var(--int-pos)">Integral</button>
+        <button class="chip" id="tSchnitt" aria-pressed="false" style="--c: var(--schnitt)">Schnitt&shy;punkt&shy;berechnung</button>
+        <button class="chip" id="tYAchse" aria-pressed="false" style="--c: var(--yachse)">y-Achsen&shy;abschnitt</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <span class="label">Sekante durch zwei Punkte</span>
+      <button class="chip wide" id="sek" aria-pressed="false" style="--c: var(--sekante)"><span>Sekanten einblenden <small>– Punkte <i>A</i> und <i>B</i> auf <i class="akt-f">f</i>, entlang des Graphen ziehbar</small></span></button>
+      <div class="bounds p-felder" id="sekFelder" hidden>
+        <div class="field"><label for="sxA"><i>x</i><sub>A</sub> =</label><input type="text" id="sxA" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="sekHinweis"></div>
+        <div class="field"><label for="syA"><i>y</i><sub>A</sub> =</label><input type="text" id="syA" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="sekHinweis"></div>
+        <div class="field"><label for="sxB"><i>x</i><sub>B</sub> =</label><input type="text" id="sxB" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="sekHinweis"></div>
+        <div class="field"><label for="syB"><i>y</i><sub>B</sub> =</label><input type="text" id="syB" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="sekHinweis"></div>
+      </div>
+      <p class="p-hinweis" id="sekHinweis" aria-live="polite"></p>
+    </div>
+
+    <div class="section">
+      <span class="label">Tangenten einblenden</span>
+      <div class="toggles three">
+        <button class="chip" id="tgH" aria-pressed="false" style="--c: var(--t-hoch)">Hochpunkte</button>
+        <button class="chip" id="tgT" aria-pressed="false" style="--c: var(--t-tief)">Tiefpunkte</button>
+        <button class="chip" id="tgW" aria-pressed="false" style="--c: var(--t-wende)"><span>Wende/<wbr>Sattel</span></button>
+      </div>
+      <button class="chip wide" id="tgP" aria-pressed="false" style="--c: var(--t-frei)"><span>Beliebiger Punkt <span class="akt-p">P</span> auf <i class="akt-f">f</i> <small>– entlang des Graphen ziehbar</small></span></button>
+      <div class="bounds p-felder">
+        <div class="field"><label for="px"><i>x</i><sub class="akt-p">P</sub> =</label><input type="text" id="px" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="pHinweis"></div>
+        <div class="field"><label for="py"><i>y</i><sub class="akt-p">P</sub> =</label><input type="text" id="py" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="pHinweis"></div>
+      </div>
+      <p class="p-hinweis" id="pHinweis" aria-live="polite"></p>
+    </div>
+
+    <div class="section">
+      <span class="label" id="sumLabel">Integral und Summen von <i class="akt-f">f</i></span>
+      <div class="summen" role="group" aria-labelledby="sumLabel">
+        <button type="button" class="sbtn" data-art="ober" aria-pressed="false">Ober&shy;summe</button>
+        <button type="button" class="sbtn" data-art="unter" aria-pressed="false">Unter&shy;summe</button>
+        <button type="button" class="sbtn" data-art="trapez" aria-pressed="false">Trapez&shy;summe</button>
+        <button type="button" class="sbtn" data-art="mitte" aria-pressed="false">Mitten&shy;summe</button>
+      </div>
+      <div class="grenzfelder">
+        <div class="gfeld"><label for="ga">Untergrenze <i>a</i></label><input type="text" id="ga" inputmode="text" autocomplete="off" value="-1"></div>
+        <div class="gfeld"><label for="gb">Obergrenze <i>b</i></label><input type="text" id="gb" inputmode="text" autocomplete="off" value="1"></div>
+        <div class="gfeld"><label for="gn">Teilintervalle <i>n</i></label><input type="text" id="gn" inputmode="numeric" autocomplete="off" value="8" aria-describedby="sumHinweis"></div>
+      </div>
+      <div class="nregler"><label for="nSlider2"><i>n</i></label><input type="range" id="nSlider2" min="0" max="1000" step="1" value="301" aria-describedby="sumHinweis"><output for="nSlider2">8</output><span class="skala" aria-hidden="true"><span>1</span><span>10</span><span>100</span><span>1000</span></span></div>
+      <p class="p-hinweis" id="sumHinweis" aria-live="polite"></p>
+    </div>
+
+    <div class="section">
+      <span class="label">Ergebnisse</span>
+      <div class="results" id="results"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="fit">Ansicht anpassen</button>
+      <button class="btn" id="reset">Zurücksetzen</button>
+    </div>
+  </aside>
+</div>
+
+<script>
+/* =====================================================================
+   Polynom – mathematischer Kern (ohne Grafik nutzbar).
+   Koeffizienten aufsteigend: c = [a0, a1, …, an],  f(x) = Σ ai·x^i
+   ===================================================================== */
+const Polynom = (() => {
+  const trim = c => { c = c.slice(); while (c.length > 1 && c[c.length - 1] === 0) c.pop(); return c; };
+  const wert = (c, x) => { let y = 0; for (let i = c.length - 1; i >= 0; i--) y = y * x + c[i]; return y; };
+  const ableitung = c => c.length <= 1 ? [0] : c.slice(1).map((a, i) => a * (i + 1));
+  const stammfunktion = c => [0, ...c.map((a, i) => a / (i + 1))];
+  const istNull = c => c.every(a => a === 0);
+  const skala = (c, x) => c.reduce((s, a, i) => s + Math.abs(a) * Math.abs(x) ** i, 0);
+
+  // Reelle Nullstellen: rekursiv über die Nullstellen der Ableitung isolieren, dann Bisektion.
+  function nullstellen(c) {
+    c = trim(c); const n = c.length - 1;
+    if (n < 1) return [];
+    if (n === 1) return [-c[0] / c[1] + 0];
+    const krit = nullstellen(ableitung(c));
+    let B = 1e-9; for (let k = 1; k <= n; k++) B = Math.max(B, Math.abs(c[n - k] / c[n]) ** (1 / k) * (k === n ? 2 ** (-1 / n) : 1));
+    B = 2 * B * 1.001 + 1e-9;
+    const pts = [-B, ...krit.filter(x => x > -B && x < B), B];
+    const out = [];
+    for (const x of krit) if (Math.abs(wert(c, x)) <= 1e-9 * Math.max(skala(c, x), 1e-300)) out.push(x); // mehrfache Nullstellen
+    for (let k = 0; k < pts.length - 1; k++) {
+      let a = pts[k], b = pts[k + 1], fa = wert(c, a), fb = wert(c, b);
+      if (fa === 0) { out.push(a); continue; }
+      if (fa * fb >= 0) continue;
+      for (let it = 0; it < 200; it++) {
+        const m = (a + b) / 2, fm = wert(c, m);
+        if (fm === 0 || b - a <= 1e-15 * (1 + Math.abs(m))) { a = b = m; break; }
+        if (fa * fm < 0) { b = m; } else { a = m; fa = fm; }
+      }
+      out.push((a + b) / 2);
+    }
+    out.sort((p, q) => p - q);
+    const res = [];
+    for (const x of out) if (!res.length || Math.abs(x - res[res.length - 1]) > 1e-7 * (1 + Math.abs(x))) res.push(x + 0);
+    return res.map(x => Math.abs(x) < 1e-12 * B ? 0 : x);          // Rundungsreste wie 2,6·10⁻¹⁷ -> 0
+  }
+
+  function vorzeichen(c, x, alle) {
+    const d = alle.filter(y => y !== x).map(y => Math.abs(y - x));
+    const eps = Math.max(Math.min(d.length ? Math.min(...d) / 2 : 1, 1e-2), 1e-6);
+    return [Math.sign(wert(c, x - eps)), Math.sign(wert(c, x + eps))];
+  }
+
+  function analysiere(koeff, a = null, b = null) {
+    const c = trim(koeff), d1 = ableitung(c), d2 = ableitung(d1), f = x => wert(c, x) + 0;
+    const N = istNull(c) ? [] : nullstellen(c);
+    const krit = istNull(d1) ? [] : nullstellen(d1);
+    const extrema = [], sattel = [];
+    for (const x of krit) {
+      const [l, r] = vorzeichen(d1, x, krit);
+      if (l > 0 && r < 0) extrema.push({ x, y: f(x), typ: "H" });
+      else if (l < 0 && r > 0) extrema.push({ x, y: f(x), typ: "T" });
+      else sattel.push({ x, y: f(x) });
+    }
+    const wk = istNull(d2) ? [] : nullstellen(d2);
+    const wende = wk.filter(x => { const [l, r] = vorzeichen(d2, x, wk); return l * r < 0; }).map(x => ({ x, y: f(x) }));
+    let integral = null, flaeche = null;
+    if (a !== null && b !== null) {
+      const F = stammfunktion(c);
+      integral = wert(F, b) - wert(F, a);
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      const g = [lo, ...N.filter(x => x > lo && x < hi), hi];
+      flaeche = 0; for (let i = 0; i < g.length - 1; i++) flaeche += Math.abs(wert(F, g[i + 1]) - wert(F, g[i]));
+    }
+    return { koeffizienten: c, grad: c.length - 1, nullstellen: N, extrema, sattelpunkte: sattel, wendepunkte: wende, integral, flaeche };
+  }
+
+  // g(x) = f(x - dx) + dy
+  function verschiebe(c, dx, dy) {
+    const n = c.length - 1, g = new Array(n + 1).fill(0);
+    for (let i = 0; i <= n; i++) {
+      let binom = 1;
+      for (let k = 0; k <= i; k++) {
+        if (k > 0) binom = binom * (i - k + 1) / k;
+        g[i - k] += c[i] * binom * (-dx) ** k;
+      }
+    }
+    g[0] += dy; return g;
+  }
+
+  // Interpolationspolynom durch n+1 Punkte (Gauß mit Pivotsuche)
+  function interpoliere(xs, ys) {
+    const m = xs.length, A = xs.map((x, r) => { const row = []; for (let j = 0; j < m; j++) row.push(x ** j); row.push(ys[r]); return row; });
+    for (let col = 0; col < m; col++) {
+      let p = col; for (let r = col + 1; r < m; r++) if (Math.abs(A[r][col]) > Math.abs(A[p][col])) p = r;
+      [A[col], A[p]] = [A[p], A[col]];
+      for (let r = 0; r < m; r++) if (r !== col) { const f = A[r][col] / A[col][col]; for (let j = col; j <= m; j++) A[r][j] -= f * A[col][j]; }
+    }
+    return A.map((row, i) => row[m] / row[i]);
+  }
+
+  function ausNullstellen(rs) { let c = [1]; for (const r of rs) { const n = new Array(c.length + 1).fill(0); c.forEach((a, i) => { n[i + 1] += a; n[i] -= r * a; }); c = n; } return c; }
+
+  function standard(n) {
+    if (n === 0) return [2];
+    if (n === 1) return [1, 0.5];
+    const r = { 2: 1.5, 3: 2, 4: 2.5 }[n] ?? 3;
+    const rs = Array.from({ length: n }, (_, i) => -r + 2 * r * i / (n - 1));
+    const c = ausNullstellen(rs);
+    let mx = 0; for (let i = 0; i <= 800; i++) mx = Math.max(mx, Math.abs(wert(c, -r + 2 * r * i / 800)));
+    let k = 2.5 / mx; const e = 10 ** Math.floor(Math.log10(k)); k = Math.round(k / e) * e;
+    const mx2 = Math.max(...c.map(a => Math.abs(a * k)));
+    return c.map(a => Math.abs(a * k) < 1e-12 * mx2 ? 0 : a * k + 0);   // Rundungsreste entfernen
+  }
+
+  // Tangente in x0:  t(x) = m·x + n  mit  m = f'(x0),  n = f(x0) − m·x0
+  function tangente(c, x0) {
+    const y0 = wert(c, x0) + 0, m = wert(ableitung(c), x0) + 0;
+    return { x0, y0, m, n: y0 - m * x0 + 0 };
+  }
+
+  // Alle Tangenten an Hoch-, Tief-, Wende- und Sattelpunkten (Sattelpunkte zählen zu den Wendepunkten)
+  function tangenten(c, erg = analysiere(c)) {
+    const out = [], z = { H: 0, T: 0, W: 0, S: 0 };
+    for (const p of erg.extrema) out.push({ ...tangente(c, p.x), typ: p.typ, nr: ++z[p.typ] });
+    for (const p of erg.wendepunkte) {
+      const s = erg.sattelpunkte.some(q => Math.abs(q.x - p.x) < 1e-6 * (1 + Math.abs(p.x)));
+      const t = tangente(c, p.x); if (s) t.m = 0, t.n = t.y0;
+      out.push({ ...t, typ: s ? "S" : "W", nr: ++z[s ? "S" : "W"] });
+    }
+    return out;
+  }
+
+  return { wert, ableitung, stammfunktion, nullstellen, analysiere, verschiebe, interpoliere, standard, trim, tangente, tangenten };
+})();
+
+/* ===================== Zahlenformat (deutsch) ===================== */
+const Zahl = (() => {
+  const SUP = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+  const fak = k => { let r = 1; for (let i = 2; i <= k; i++) r *= i; return r; };
+  const ggT = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a; };
+  const wissNoetig = v => v !== 0 && (Math.abs(v) < 1e-4 || Math.abs(v) >= 1e9);
+  function wiss(v) {
+    let e = Math.floor(Math.log10(Math.abs(v))), m = v / 10 ** e;
+    if (Math.round(Math.abs(m) * 100) / 100 >= 10) { m /= 10; e += 1; }
+    return [m, e];
+  }
+  function dez(v, st = 3) {
+    if (!isFinite(v)) return "–";
+    if (wissNoetig(v)) { const [m, e] = wiss(v); return `${dez(m, 2)}·10${String(e).split("").map(z => SUP[z]).join("")}`; }
+    if (v !== 0 && Math.abs(v) < 10 ** (-st + 1)) st = Math.min(Math.floor(-Math.log10(Math.abs(v))) + 2, 12);
+    let s = (Math.round(v * 10 ** st) / 10 ** st + 0).toFixed(st);
+    if (s.includes(".")) s = s.replace(/0+$/, "").replace(/\.$/, "");
+    if (s === "-0") s = "0";
+    return s.replace(".", ",").replace("-", "−");
+  }
+  // p/q mit kleinem Nenner (relativer Vergleich, damit winzige Zahlen nicht zu 0 werden)
+  function bruch(v, maxNenner = 12) {
+    if (v === 0) return [0, 1];
+    if (Math.abs(v) >= 1e9) return null;
+    for (let q = 1; q <= maxNenner; q++) { const p = Math.round(v * q); if (p !== 0 && Math.abs(p / q - v) < 1e-9 * Math.abs(v)) return [p, q]; }
+    return null;
+  }
+  // p/k!  (k = 4 … 20, p teilerfremd zu k!, |p| < 100) – typisch für Taylorkoeffizienten
+  function fakBruch(v) {
+    if (v === 0) return null;
+    for (let k = 4; k <= 20; k++) {
+      const q = fak(k), p = Math.round(v * q);
+      if (p !== 0 && Math.abs(p) < 100 && ggT(p, q) === 1 && Math.abs(p / q - v) <= 1e-9 * Math.abs(v)) return [p, k];
+    }
+    return null;
+  }
+  function text(v) {
+    const b = bruch(v); if (b) return b[1] === 1 ? String(b[0]) : `${b[0]}/${b[1]}`;
+    const f = fakBruch(v); if (f) return `${f[0]}/${f[1]}!`;
+    if (wissNoetig(v)) return v.toPrecision(5).replace(/\.?0+e/, "e").replace("e+", "e").replace(".", ",");
+    return dez(v, 4).replace("−", "-");
+  }
+  // Sicherer Rechenausdruck-Parser: + - * · × / : ^, Klammern, Fakultät !, Dezimalkomma, 1e-5
+  function parse(s) {
+    s = s.trim().replace(/\s+/g, "").replace(/,/g, ".").replace(/−/g, "-").replace(/[·×]/g, "*").replace(/:/g, "/").replace(/\*\*/g, "^");
+    if (s === "") return 0;
+    let i = 0; const sieh = () => s[i];
+    const fehler = () => { throw new Error(); };
+    function ausdruck() { let v = term(); while (sieh() === "+" || sieh() === "-") { const op = s[i++], r = term(); v = op === "+" ? v + r : v - r; } return v; }
+    function term() { let v = vorz(); while (sieh() === "*" || sieh() === "/") { const op = s[i++], r = vorz(); if (op === "/" && r === 0) fehler(); v = op === "*" ? v * r : v / r; } return v; }
+    function vorz() { if (sieh() === "-") { i++; return -vorz(); } if (sieh() === "+") { i++; return vorz(); } return potenz(); }
+    function potenz() { const b = fakultaet(); if (sieh() === "^") { i++; return b ** vorz(); } return b; }
+    function fakultaet() {
+      let v = einfach();
+      while (sieh() === "!") { i++; if (v < 0 || Math.abs(v - Math.round(v)) > 1e-12 || v > 170) fehler(); v = fak(Math.round(v)); }
+      return v;
+    }
+    function einfach() {
+      if (sieh() === "(") { i++; const v = ausdruck(); if (sieh() !== ")") fehler(); i++; return v; }
+      const m = /^(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?/.exec(s.slice(i)); if (!m) fehler();
+      i += m[0].length; return parseFloat(m[0]);
+    }
+    try { const v = ausdruck(); return (i === s.length && isFinite(v)) ? v : null; } catch { return null; }
+  }
+  return { dez, bruch, fakBruch, wiss, wissNoetig, text, parse };
+})();
+
+/* ===================== Riemann-Summen (identisch zu riemann_summe in polynom_explorer.py) =====================
+   Obersumme: größter, Untersumme: kleinster Funktionswert je Teilintervall; Trapezsumme: Trapeze durch die
+   Randpunkte; Mittensumme: Funktionswert in der Intervallmitte. kritisch = mögliche Extremstellen von f
+   (Polynom: Nullstellen von f′) für eine exakte Ober-/Untersumme, null = numerisch (Abtasten + Goldener Schnitt).
+   Ist b < a, wird über [b; a] summiert und das Vorzeichen umgekehrt (wie beim Integral). */
+const Summen = (() => {
+  const ARTEN = { ober: "Obersumme", unter: "Untersumme", trapez: "Trapezsumme", mitte: "Mittensumme" };
+  const ZEICHEN = { ober: "O", unter: "U", trapez: "T", mitte: "M" };
+  const N_MAX = 1000, GOLD = (Math.sqrt(5) - 1) / 2, endl = Number.isFinite;
+  function extremwert(f, u, v, max, kritisch, m) {      // größter bzw. kleinster Wert von f auf [u; v]
+    const besser = (p, q) => max ? p > q : p < q;
+    let bx = u, by = f(u);
+    const nimm = (x, y) => { if (endl(y) && besser(y, by)) { bx = x; by = y; } };
+    const yv = f(v);
+    if (!endl(by) || !endl(yv)) return null;
+    nimm(v, yv);
+    if (kritisch) {
+      for (const x of kritisch) if (x > u && x < v) { const y = f(x); if (!endl(y)) return null; nimm(x, y); }
+      return { x: bx, y: by };
+    }
+    const xs = [], ys = [];
+    for (let j = 0; j < m; j++) { const x = u + (v - u) * j / (m - 1), y = f(x); if (!endl(y)) return null; xs.push(x); ys.push(y); }
+    let jb = 0; for (let j = 1; j < m; j++) if (besser(ys[j], ys[jb])) jb = j;
+    nimm(xs[jb], ys[jb]);
+    let lo = xs[Math.max(jb - 1, 0)], hi = xs[Math.min(jb + 1, m - 1)];
+    let c = hi - GOLD * (hi - lo), d = lo + GOLD * (hi - lo), fc = f(c), fd = f(d);
+    for (let k = 0; k < 40; k++) {
+      if (besser(fc, fd)) { hi = d; d = c; fd = fc; c = hi - GOLD * (hi - lo); fc = f(c); }
+      else { lo = c; c = d; fc = fd; d = lo + GOLD * (hi - lo); fd = f(d); }
+    }
+    nimm(c, fc); nimm(d, fd);
+    return { x: bx, y: by };
+  }
+  // Ergebnis: { art, name, zeichen, n, a, b, dx, wert, teile: [{ i, x0, x1, xi, h, (y0, y1), wert, anteil }] }
+  // bzw. { …, fehlt: [x0, x1] }, wenn f in einem Teilintervall nicht definiert ist
+  function berechne(f, a, b, n, art, kritisch = null) {
+    if (!ARTEN[art]) throw new Error(`Unbekannte Summe „${art}“ – möglich: ${Object.keys(ARTEN).join(", ")}`);
+    n = Math.floor(+n + 0.5);
+    if (!(n >= 1 && n <= N_MAX)) throw new Error(`n muss zwischen 1 und ${N_MAX} liegen`);
+    const lo = Math.min(a, b), hi = Math.max(a, b), vz = b < a ? -1 : 1, dx = (hi - lo) / n;
+    const m = Math.max(16, Math.min(400, Math.ceil(8000 / n)));
+    const krit = kritisch ? kritisch.slice().sort((p, q) => p - q) : null;
+    const kopf = { art, name: ARTEN[art], zeichen: ZEICHEN[art], n, a, b, dx };
+    const teile = [];
+    for (let i = 0; i < n; i++) {
+      const x0 = lo + dx * i, x1 = i === n - 1 ? hi : lo + dx * (i + 1);
+      let t;
+      if (art === "trapez") {
+        const y0 = f(x0), y1 = f(x1);
+        if (!endl(y0) || !endl(y1)) return { ...kopf, fehlt: [x0, x1] };
+        t = { i: i + 1, x0, x1, xi: null, y0, y1, h: (y0 + y1) / 2 };
+      } else if (art === "mitte") {
+        const xm = (x0 + x1) / 2, y = f(xm);
+        if (!endl(y)) return { ...kopf, fehlt: [x0, x1] };
+        t = { i: i + 1, x0, x1, xi: xm, h: y };
+      } else {
+        const e = extremwert(f, x0, x1, art === "ober", krit, m);
+        if (!e) return { ...kopf, fehlt: [x0, x1] };
+        t = { i: i + 1, x0, x1, xi: e.x, h: e.y };
+      }
+      teile.push(t);
+    }
+    let summe = 0, betrag = 0;
+    for (const t of teile) { t.wert = vz * t.h * (t.x1 - t.x0); summe += t.wert; betrag += Math.abs(t.wert); }
+    const null0 = Math.abs(summe) <= 1e-12 * betrag;
+    for (const t of teile) t.anteil = null0 ? NaN : t.wert / summe;
+    return { ...kopf, wert: summe, teile };
+  }
+  return { ARTEN, ZEICHEN, N_MAX, berechne };
+})();
+
+/* ===================== SVG-Export: die Grafik wird ein zweites Mal in einen SVG-„Zeichenkontext“ gezeichnet =====================
+   Der Kontext versteht genau die Canvas-Befehle, die zeichne() benutzt (Pfade, Kreise, abgerundete Rechtecke, Text,
+   Strichelung, Deckkraft, Clipping), und schreibt sie als echte Vektorgrafik. */
+const SvgExport = (() => {
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const z = v => String(Math.round(v * 100) / 100);
+  const z3 = v => String(Math.round(v * 1000) / 1000);
+  function farbe(c, alpha) {                           // rgba(…) in Farbe + Deckkraft zerlegen (für alle SVG-Programme lesbar)
+    const m = /^rgba?\(([^)]+)\)$/.exec(String(c).trim());
+    if (!m) return [String(c), alpha];
+    const t = m[1].split(",").map(s => s.trim());
+    return [`rgb(${t[0]},${t[1]},${t[2]})`, (t.length > 3 ? parseFloat(t[3]) : 1) * alpha];
+  }
+  class Pfad {
+    constructor() { this.d = []; this.start = null; }
+    moveTo(x, y) { this.d.push(`M${z(x)} ${z(y)}`); this.start = [x, y]; }
+    lineTo(x, y) { if (!this.start) return this.moveTo(x, y); this.d.push(`L${z(x)} ${z(y)}`); }
+    closePath() { if (this.start) this.d.push("Z"); }
+    rect(x, y, w, h) { this.moveTo(x, y); this.lineTo(x + w, y); this.lineTo(x + w, y + h); this.lineTo(x, y + h); this.closePath(); }
+    ecke(r, x, y) { this.d.push(`A${z(r)} ${z(r)} 0 0 1 ${z(x)} ${z(y)}`); }
+    roundRect(x, y, w, h, r = 0) {
+      r = Math.max(0, Math.min(typeof r === "number" ? r : (r && r[0]) || 0, Math.abs(w) / 2, Math.abs(h) / 2));
+      this.moveTo(x + r, y); this.lineTo(x + w - r, y); this.ecke(r, x + w, y + r);
+      this.lineTo(x + w, y + h - r); this.ecke(r, x + w - r, y + h);
+      this.lineTo(x + r, y + h); this.ecke(r, x, y + h - r);
+      this.lineTo(x, y + r); this.ecke(r, x + r, y); this.closePath();
+    }
+    arc(cx, cy, r, a0, a1, gegen = false) {
+      const p = a => [cx + r * Math.cos(a), cy + r * Math.sin(a)], [sx, sy] = p(a0), sweep = gegen ? 0 : 1;
+      if (this.start) this.lineTo(sx, sy); else this.moveTo(sx, sy);
+      const span = gegen ? a0 - a1 : a1 - a0;
+      if (Math.abs(span) >= 2 * Math.PI - 1e-9) {     // Vollkreis aus zwei Halbkreisen
+        const [mx, my] = p(a0 + (gegen ? -Math.PI : Math.PI));
+        this.d.push(`A${z(r)} ${z(r)} 0 1 ${sweep} ${z(mx)} ${z(my)}`, `A${z(r)} ${z(r)} 0 1 ${sweep} ${z(sx)} ${z(sy)}`);
+        return;
+      }
+      const s = ((span % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), [ex, ey] = p(a1);
+      this.d.push(`A${z(r)} ${z(r)} 0 ${s > Math.PI ? 1 : 0} ${sweep} ${z(ex)} ${z(ey)}`);
+    }
+    text() { return this.d.join(""); }
+  }
+  let aktiv = false;                                   // während des Exports liefert neuerPfad() SVG-Pfade statt Path2D
+  const neuerPfad = () => aktiv ? new Pfad() : new Path2D();
+
+  function kontext(W, H, messen) {
+    const teile = [], defs = [];
+    let nr = 0, pfad = new Pfad();
+    let st = { fillStyle: "#000", strokeStyle: "#000", lineWidth: 1, globalAlpha: 1, font: "10px sans-serif", textAlign: "start",
+               textBaseline: "alphabetic", lineJoin: "miter", lineCap: "butt", dash: [], gruppen: 0 };
+    const stapel = [];
+    function malen(p, fuellen) {
+      const d = p.text(); if (!d) return;
+      const [c, a] = farbe(fuellen ? st.fillStyle : st.strokeStyle, st.globalAlpha);
+      if (a <= 0) return;
+      const op = a < 1 ? ` ${fuellen ? "fill" : "stroke"}-opacity="${z3(a)}"` : "";
+      if (fuellen) teile.push(`<path d="${d}" fill="${esc(c)}"${op}/>`);
+      else teile.push(`<path d="${d}" fill="none" stroke="${esc(c)}" stroke-width="${z(st.lineWidth)}"${op}` +
+        (st.dash.length ? ` stroke-dasharray="${st.dash.map(z).join(" ")}"` : "") +
+        ` stroke-linejoin="${st.lineJoin}" stroke-linecap="${st.lineCap}"/>`);
+    }
+    const ctx = {
+      setTransform() {},                               // Exportiert wird in CSS-Pixeln (ohne Geräte-Pixelfaktor)
+      save() { stapel.push({ ...st, dash: st.dash.slice() }); st.gruppen = 0; },
+      restore() { for (let i = 0; i < st.gruppen; i++) teile.push("</g>"); const alt = stapel.pop(); if (alt) st = alt; },
+      beginPath() { pfad = new Pfad(); },
+      moveTo(x, y) { pfad.moveTo(x, y); }, lineTo(x, y) { pfad.lineTo(x, y); }, closePath() { pfad.closePath(); },
+      rect(x, y, w, h) { pfad.rect(x, y, w, h); }, roundRect(x, y, w, h, r) { pfad.roundRect(x, y, w, h, r); },
+      arc(cx, cy, r, a0, a1, g) { pfad.arc(cx, cy, r, a0, a1, g); },
+      setLineDash(d) { st.dash = d.slice(); }, getLineDash() { return st.dash.slice(); },
+      fill(p) { malen(p instanceof Pfad ? p : pfad, true); },
+      stroke(p) { malen(p instanceof Pfad ? p : pfad, false); },
+      fillRect(x, y, w, h) { const q = new Pfad(); q.rect(x, y, w, h); malen(q, true); },
+      clip() {
+        const id = "clip" + (++nr);
+        defs.push(`<clipPath id="${id}"><path d="${pfad.text()}"/></clipPath>`);
+        teile.push(`<g clip-path="url(#${id})">`); st.gruppen++;
+      },
+      fillText(t, x, y) {
+        const [c, a] = farbe(st.fillStyle, st.globalAlpha);
+        const anker = { center: "middle", right: "end", end: "end" }[st.textAlign] || "start";
+        const basis = { top: "hanging", hanging: "hanging", middle: "central", bottom: "text-after-edge", ideographic: "text-after-edge" }[st.textBaseline];
+        teile.push(`<text x="${z(x)}" y="${z(y)}" fill="${esc(c)}"${a < 1 ? ` fill-opacity="${z3(a)}"` : ""} style="font: ${esc(st.font)}; white-space: pre"` +
+          ` text-anchor="${anker}"${basis ? ` dominant-baseline="${basis}"` : ""}>${esc(t)}</text>`);
+      },
+      measureText(t) { messen.font = st.font; return messen.measureText(t); }
+    };
+    for (const k of ["fillStyle", "strokeStyle", "lineWidth", "globalAlpha", "font", "textAlign", "textBaseline", "lineJoin", "lineCap"])
+      Object.defineProperty(ctx, k, { get: () => st[k], set: v => { st[k] = v; } });
+    const svg = titel => {
+      let ende = ""; for (let i = 0; i < st.gruppen; i++) ende += "</g>";
+      while (stapel.length) { const alt = stapel.pop(); for (let i = 0; i < alt.gruppen; i++) ende += "</g>"; }
+      return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${z(W)}" height="${z(H)}" viewBox="0 0 ${z(W)} ${z(H)}">\n` +
+        `<title>${esc(titel)}</title>\n<defs><clipPath id="fenster"><rect width="${z(W)}" height="${z(H)}"/></clipPath>${defs.join("")}</defs>\n` +
+        `<g clip-path="url(#fenster)">\n${teile.join("\n")}${ende}\n</g>\n</svg>\n`;
+    };
+    return { ctx, svg };
+  }
+  // zeichne: Zeichenfunktion der Oberfläche; tausche(ctx) setzt den Kontext und gibt den alten zurück
+  function erstelle(zeichne, tausche, W, H, messen, titel) {
+    const k = kontext(W, H, messen);
+    aktiv = true; const alt = tausche(k.ctx);
+    try { zeichne(); } finally { tausche(alt); aktiv = false; }
+    return k.svg(titel);
+  }
+  return { erstelle, neuerPfad };
+})();
+
+/* ===================== Polynom-Term (Termfelder „f(x) = …“, „g(x) = …“) ===================== */
+// Polynomterm -> Koeffizienten (aufsteigend), identisch zu polynom_aus_term in polynom_explorer.py.
+// Erlaubt: Zahlen (Komma oder Punkt), x, + − · * / : ^ **, ², ³, Klammern, implizite Multiplikation
+// (2x, 3(x+1), (x−1)(x+2)), Fakultät n! bei Zahlen. Geteilt werden darf nur durch Zahlen.
+const PolyTerm = (() => {
+  class TermFehler extends Error {}
+  const N_MAX = 20;
+  const trim = c => { c = c.slice(); while (c.length > 1 && c[c.length - 1] === 0) c.pop(); return c; };
+  const add = (p, q, s) => { const r = []; for (let i = 0; i < Math.max(p.length, q.length); i++) r.push((p[i] || 0) + s * (q[i] || 0)); return r; };
+  const mul = (p, q) => { const r = new Array(p.length + q.length - 1).fill(0); p.forEach((a, i) => q.forEach((b, j) => { r[i + j] += a * b; })); return r; };
+  const fak = n => { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; };
+  const OPS = { "·": "*", "×": "*", "÷": "/", ":": "/", "−": "-" };
+  function parse(text) {
+    const s = String(text).replace(/\*\*/g, "^");
+    const re = /\s+|((?:\d+(?:[.,]\d+)?|[.,]\d+)(?:[eE][+-]?\d+)?)|([A-Za-z]+)|([-+*/^()!·×÷:−²³])/y;
+    const t = []; let pos = 0;
+    while (pos < s.length) {
+      re.lastIndex = pos; const m = re.exec(s);
+      if (!m) throw new TermFehler(`Unbekanntes Zeichen „${s[pos]}“ an Stelle ${pos + 1}`);
+      if (m[1] !== undefined) t.push(["zahl", parseFloat(m[1].replace(",", ".")), pos]);
+      else if (m[2] !== undefined) {
+        if (m[2].toLowerCase() !== "x") throw new TermFehler(`„${m[2]}“ ist hier nicht erlaubt – nur Polynome aus x, Zahlen, + − · / ^ und Klammern (Stelle ${pos + 1})`);
+        t.push(["x", 0, pos]);
+      } else if (m[3] !== undefined) t.push(["op", OPS[m[3]] || m[3], pos]);
+      pos = re.lastIndex;
+    }
+    t.push(["ende", 0, s.length]);
+    let i = 0;
+    const ist = o => t[i][0] === "op" && t[i][1] === o;
+    const fehler = msg => { throw new TermFehler(`${msg} (Stelle ${t[i][2] + 1})`); };
+    const pruefe = p => { if (trim(p).length - 1 > N_MAX) throw new TermFehler(`Höchstens Grad ${N_MAX} erlaubt.`); return p; };
+    const zahlOder = (p, msg) => { const q = trim(p); if (q.length > 1) fehler(msg); return q[0]; };
+    function ausdruck() { let p = term(); while (ist("+") || ist("-")) { const o = t[i++][1]; p = add(p, term(), o === "+" ? 1 : -1); } return p; }
+    const startetFaktor = () => t[i][0] === "zahl" || t[i][0] === "x" || ist("(");
+    function term() {
+      let p = vorz();
+      for (;;) {
+        if (ist("*")) { i++; p = pruefe(mul(p, vorz())); }
+        else if (ist("/")) { i++; const d = zahlOder(vorz(), "Geteilt werden darf nur durch Zahlen (sonst kein Polynom)"); if (d === 0) fehler("Division durch 0"); p = p.map(a => a / d); }
+        else if (startetFaktor()) p = pruefe(mul(p, potenz()));
+        else return p;
+      }
+    }
+    function vorz() { if (ist("-")) { i++; return vorz().map(a => -a); } if (ist("+")) { i++; return vorz(); } return potenz(); }
+    function potenz() {
+      const b = postfix();
+      if (!ist("^")) return b;
+      i++; const e = zahlOder(vorz(), "Der Exponent muss eine natürliche Zahl sein");
+      if (!(e >= 0) || e !== Math.floor(e)) fehler("Der Exponent muss eine natürliche Zahl sein");
+      if ((trim(b).length - 1) * e > N_MAX) throw new TermFehler(`Höchstens Grad ${N_MAX} erlaubt.`);
+      let r = [1]; for (let k = 0; k < e; k++) r = mul(r, b); return r;
+    }
+    function postfix() {
+      let p = primaer();
+      for (;;) {
+        if (ist("!")) { i++; const v = zahlOder(p, "Fakultät nur für natürliche Zahlen"); if (v < 0 || v !== Math.floor(v) || v > 170) fehler("Fakultät nur für natürliche Zahlen"); p = [fak(v)]; }
+        else if (ist("²") || ist("³")) { const e = t[i++][1] === "²" ? 2 : 3; let r = [1]; for (let k = 0; k < e; k++) r = pruefe(mul(r, p)); p = r; }
+        else return p;
+      }
+    }
+    function primaer() {
+      const [art, w] = t[i];
+      if (art === "zahl") { i++; return [w]; }
+      if (art === "x") { i++; return [0, 1]; }
+      if (ist("(")) { i++; const p = ausdruck(); if (!ist(")")) fehler("Schließende Klammer „)“ fehlt"); i++; return p; }
+      if (art === "ende") fehler("Term endet unerwartet");
+      fehler(`Unerwartetes „${w}“`);
+    }
+    if (t[0][0] === "ende") throw new TermFehler("Der Term ist leer.");
+    const p = ausdruck();
+    if (t[i][0] !== "ende") fehler(`Unerwartetes „${t[i][1]}“`);
+    return trim(p.map(a => a + 0));
+  }
+  // Koeffizienten -> Term zum Eintippen, z. B. „4/5·x^3 - 16/5·x“
+  function text(c) {
+    const t = [];
+    for (let i = c.length - 1; i >= 0; i--) {
+      const a = c[i]; if (a === 0) continue;
+      const z = Zahl.text(Math.abs(a)), pot = i === 0 ? "" : i === 1 ? "x" : `x^${i}`;
+      t.push([a < 0 ? "-" : "+", i === 0 ? z : z === "1" ? pot : `${z}·${pot}`]);
+    }
+    if (!t.length) return "0";
+    return (t[0][0] === "-" ? "-" : "") + t[0][1] + t.slice(1).map(([v, s]) => ` ${v} ${s}`).join("");
+  }
+  return { parse, text, TermFehler };
+})();
+
+/* ===================== Interaktive Oberfläche ===================== */
+function PolynomExplorer(opts = {}) {
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const C = {}, D = {};
+  const DESIGNS = ["3b1b", "pearson"];
+  function leseFarben() {
+    ["stage","graph","grid","grid-fine","null","ext","wende","int-pos","int-neg","fg","dim","t-hoch","t-tief","t-wende","t-frei","sekante","trace","schnitt","yachse","summe","summe-neg",
+     "kontur","label-bg","marke-text","stuetz","stuetz-fill","k-F","k-d1","k-d2","k-d3",
+     "g-graph","g-F","g-d1","g-d2","g-d3"].forEach(k => C[k] = css("--" + k));
+    ["flaeche-pos","flaeche-neg","gitter-alpha","gitter-fein-alpha","glanz","graph-lw","pfeile","summe-alpha"].forEach(k => D[k] = parseFloat(css("--" + k)));
+  }
+  leseFarben();
+  const FONT_MATH = css("--font-math");
+
+  // ----- Zwei Funktionen f und g mit jeweils eigenem Zustand (wie in polynom_explorer.py).
+  // Die Routinen arbeiten auf dem „geladenen“ Zustand in S; lade(k) wechselt zwischen f und g.
+  // Außerhalb einer Berechnung ist immer die gerade bearbeitete Funktion (S.akt) geladen.
+  const FN_FELDER = ["c", "n", "sx", "sy", "tx", "pAn", "tP", "tang", "erg", "kurven", "kd"];
+  const NAME = { f: { f: "f", F: "F", P: "P" }, g: { f: "g", F: "G", P: "Q" } };
+  const neueFunktion = (c, kurven) => ({ c, n: c.length - 1, sx: [], sy: [], tx: 1, pAn: false, tP: null, tang: [], erg: null, kurven, kd: [] });
+  const STANDARD_G = [-2, 0, 0.5];
+  const FN = {
+    f: neueFunktion(opts.koeffizienten ? opts.koeffizienten.slice() : Polynom.standard(opts.grad ?? 3),
+                    { F: false, f: true, d1: false, d2: false, d3: false, ...(opts.kurven || {}) }),
+    g: neueFunktion(opts.koeffizientenG ? opts.koeffizientenG.slice() : STANDARD_G.slice(),
+                    { F: false, f: false, d1: false, d2: false, d3: false, ...(opts.kurvenG || {}) })
+  };
+  const S = {
+    a: -1, b: 1, akt: "f", geladen: "f",
+    // Beim Start ist nur der Graph von f zu sehen; alles Weitere wird über die Knöpfe eingeblendet
+    show: { null: false, ext: false, wende: false, integral: false, tH: false, tT: false, tW: false, stuetz: false, schnitt: false, yachse: false },
+    sek: { an: false, xA: -1, xB: 1 },
+    trace: { an: false, x: 0, spur: {} },
+    schnitte: [],              // Trace-Modus; spur: "f:d1" -> überstrichene x-Intervalle                 // Sekante durch A und B (gehört zur bearbeiteten Funktion)
+    sk: null,
+    summe: { art: null, n: 8 }, sum: null, hover: null,   // Riemann-Summe der bearbeiteten Funktion; hover = Feld unter dem Zeiger
+    view: { cx: 0, cy: 0, sx: null, sy: null }
+  };
+  for (const p of FN_FELDER) S[p] = FN.f[p];
+  function lade(k) {
+    if (S.geladen === k) return;
+    for (const p of FN_FELDER) FN[S.geladen][p] = S[p];
+    for (const p of FN_FELDER) S[p] = FN[k][p];
+    S.geladen = k;
+  }
+  const mit = (k, fn) => { const vorher = S.geladen; lade(k); try { return fn(); } finally { lade(vorher); } };
+  const nm = () => NAME[S.geladen];
+  const gSichtbar = () => mit("g", () => Object.values(S.kurven).some(Boolean));
+
+  const $ = id => document.getElementById(id);
+  const cv = $("cv"), wrap = $("wrap"), status = $("status");
+  let ctx = cv.getContext("2d");                    // „let“: der SVG-Export tauscht den Zeichenkontext vorübergehend aus
+  let W = 0, H = 0;
+
+  // ----- Termfelder f(x) = …, g(x) = …
+  const termIn = { f: $("termF"), g: $("termG") };
+  function meldung(text, fehler = false) { status.textContent = text; status.classList.toggle("fehler", fehler); }
+  for (const k of ["f", "g"]) termIn[k].addEventListener("input", () => {
+    try {
+      const c = PolyTerm.parse(termIn[k].value);
+      termIn[k].classList.remove("bad"); meldung("");
+      mit(k, () => { S.c = c; S.n = c.length - 1; if (W) verteileStuetz(); if (k === "g" && !Object.values(S.kurven).some(Boolean)) S.kurven.f = true; });
+      kurvenKnoepfeSetzen(); render();
+    } catch (e) {
+      termIn[k].classList.add("bad");
+      meldung(`⚠ ${k}(x): ` + (e instanceof PolyTerm.TermFehler ? e.message : "Ungültiger Term"), true);
+    }
+  });
+
+  // ----- Koeffizientenfelder (der bearbeiteten Funktion: a_i für f, b_i für g)
+  const coeffBox = $("coeffs"), inputs = [];
+  for (let i = 0; i <= 20; i++) {
+    const fld = document.createElement("div"); fld.className = "field";
+    fld.innerHTML = `<label for="a${i}"><i class="kb">a</i><sub>${i}</sub></label><input type="text" id="a${i}" inputmode="text" autocomplete="off" spellcheck="false">`;
+    coeffBox.appendChild(fld);
+    const inp = fld.querySelector("input");
+    inp.addEventListener("input", () => {
+      const v = Zahl.parse(inp.value); inp.classList.toggle("bad", v === null);
+      if (v === null) return;
+      S.c[i] = v; S.sy = S.sx.map(x => Polynom.wert(S.c, x)); render();
+    });
+    inp.addEventListener("blur", () => { inp.classList.remove("bad"); inp.value = Zahl.text(S.c[i]); });
+    inputs.push({ row: fld, inp });
+  }
+  for (const [id, key] of [["ga", "a"], ["gb", "b"]]) {
+    const inp = $(id);
+    inp.addEventListener("input", () => { const v = Zahl.parse(inp.value); inp.classList.toggle("bad", v === null); if (v !== null) { S[key] = v; render(); } });
+    inp.addEventListener("blur", () => { inp.classList.remove("bad"); inp.value = Zahl.text(S[key]); });
+  }
+
+  // ----- Riemann-Summen: Ober-, Unter-, Trapez-, Mittensumme der bearbeiteten Funktion über [a; b] mit n Teilintervallen
+  const sumKnoepfe = [...document.querySelectorAll(".summen .sbtn")], gnIn = $("gn"), sumHinweis = $("sumHinweis"), sumTip = $("sumTip");
+  let tipPos = null;                                   // letzte Zeigerposition über dem Koordinatensystem (für die Anteil-Anzeige)
+  function sumMeldung(text, fehler = false) { sumHinweis.textContent = text; sumHinweis.classList.toggle("fehler", fehler); }
+  function sumKnopf() { sumKnoepfe.forEach(b => b.setAttribute("aria-pressed", b.dataset.art === S.summe.art)); }
+  function setzeSumme(art) {
+    if (art !== null && !Summen.ARTEN[art]) throw new Error(`Unbekannte Summe „${art}“ – möglich: ${Object.keys(Summen.ARTEN).join(", ")}`);
+    S.summe.art = art; S.hover = null; sumKnopf(); render();
+  }
+  sumKnoepfe.forEach(b => b.addEventListener("click", () => setzeSumme(S.summe.art === b.dataset.art ? null : b.dataset.art)));
+  function nLesen(text) { const s = String(text).trim(); if (!/^\d+$/.test(s)) return null; const n = +s; return n >= 1 && n <= Summen.N_MAX ? n : null; }
+  gnIn.addEventListener("input", () => {
+    const n = nLesen(gnIn.value); gnIn.classList.toggle("bad", n === null);
+    if (n === null) { sumMeldung(`n muss eine ganze Zahl von 1 bis ${Summen.N_MAX} sein.`, true); return; }
+    sumMeldung(""); S.summe.n = n; S.hover = null; nRegler(); render();
+  });
+  gnIn.addEventListener("blur", () => { gnIn.classList.remove("bad"); gnIn.value = String(S.summe.n); sumMeldung(""); });
+  // Schieberegler für n (logarithmisch geteilt, damit kleine n fein und große n schnell einstellbar sind):
+  // einer unter der Grafik, einer unter den Feldern a, b, n; Pfeiltasten ändern n um 1, Bild↑/↓ um 10
+  const nSlider = [$("nSlider1"), $("nSlider2")];
+  const nZuRegler = n => Math.round(1000 * Math.log(n) / Math.log(Summen.N_MAX));
+  const reglerZuN = v => Math.max(1, Math.min(Summen.N_MAX, Math.round(Summen.N_MAX ** (v / 1000))));
+  function nRegler() {
+    for (const r of nSlider) {
+      if (reglerZuN(+r.value) !== S.summe.n) r.value = nZuRegler(S.summe.n);
+      r.nextElementSibling.textContent = S.summe.n; r.setAttribute("aria-valuetext", `n = ${S.summe.n}`);
+    }
+  }
+  function nSetzen(n) {
+    S.summe.n = n; S.hover = null; sumMeldung(""); gnIn.classList.remove("bad");
+    if (document.activeElement !== gnIn) gnIn.value = String(n);
+    nRegler(); render();
+  }
+  for (const r of nSlider) {
+    r.addEventListener("input", () => nSetzen(reglerZuN(+r.value)));
+    r.addEventListener("keydown", e => {
+      const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1, PageUp: 10, PageDown: -10 }[e.key];
+      if (!d) return;
+      e.preventDefault(); nSetzen(Math.max(1, Math.min(Summen.N_MAX, S.summe.n + d)));
+    });
+  }
+  // ----- Grafik als Vektorgrafik (SVG) speichern; Dateiname aus den eingeblendeten Kurven und den aktiven Eigenschaften
+  const STRICHE = s => s.replace(/‴/g, "'''").replace(/″/g, "''").replace(/′/g, "'");
+  function svgDateiname() {
+    const kurven = [];
+    for (const k of ["f", "g"]) mit(k, () => { for (const K of kurvenListe()) if (S.kurven[K.key]) kurven.push(STRICHE(K.name)); });
+    const e = [];
+    if (S.show.null) e.push("Nullstellen");
+    if (S.show.ext) e.push("Extrema");
+    if (S.show.wende) e.push("Wendepunkte");
+    if (S.show.integral) e.push("Integral");
+    if (S.show.schnitt) e.push("Schnittpunkte");
+    if (S.show.yachse) e.push("y-Achsenabschnitte");
+    if (S.show.tH) e.push("Tangente-Hochpunkte");
+    if (S.show.tT) e.push("Tangente-Tiefpunkte");
+    if (S.show.tW) e.push("Tangente-Wendepunkte");
+    for (const k of ["f", "g"]) if (mit(k, () => S.pAn)) e.push("Tangente-" + NAME[k].P);
+    if (S.sek.an) e.push("Sekante");
+    if (S.summe.art) e.push(`${Summen.ARTEN[S.summe.art]}-n${S.summe.n}`);
+    if (S.trace.an) e.push("Trace");
+    if (S.show.stuetz) e.push("Verformungspunkte");
+    const name = [...(kurven.length ? kurven : [NAME[S.akt].f]), ...e].join("_").replace(/[\\/:*?"<>|\s]+/g, "-");
+    return name.slice(0, 200);
+  }
+  function svgText() {                                 // aktueller Inhalt des Grafikfensters als SVG (ohne die Anteil-Anzeige)
+    const hover = S.hover; S.hover = null;
+    try {
+      return SvgExport.erstelle(zeichne, neu => { const alt = ctx; ctx = neu; return alt; }, W, H, cv.getContext("2d"), svgDateiname());
+    } finally { S.hover = hover; zeichne(); }
+  }
+  const svgKnopf = $("svgSpeichern");
+  let svgUhr = null;
+  function svgRueckmeldung(text) {
+    svgKnopf.textContent = text; clearTimeout(svgUhr);
+    svgUhr = setTimeout(() => { svgKnopf.textContent = "⤓ Grafik als SVG speichern"; }, 2500);
+  }
+  async function svgSpeichern() {
+    const dateiname = svgDateiname() + ".svg", daten = svgText();
+    let dl = null;
+    try { dl = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads") : null; } catch { dl = null; }
+    if (dl) {
+      try { await dl.save({ filename: dateiname, data: daten }); svgRueckmeldung("✓ gespeichert"); }
+      catch (e) { svgRueckmeldung(e && e.code === "declined" ? "abgebrochen" : "Speichern hier nicht möglich"); }
+      return dateiname;
+    }
+    const a = document.createElement("a");             // außerhalb von claude.ai: gewöhnlicher Download
+    a.href = URL.createObjectURL(new Blob([daten], { type: "image/svg+xml" })); a.download = dateiname;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    svgRueckmeldung("✓ gespeichert");
+    return dateiname;
+  }
+  svgKnopf.addEventListener("click", () => { svgSpeichern(); });
+  function summeBerechnen() {                          // Summe der geladenen (bearbeiteten) Funktion
+    if (!S.summe.art || !S.kurven.f) return null;
+    const r = Summen.berechne(f, S.a, S.b, S.summe.n, S.summe.art, kritischeStellen());
+    return { ...r, fn: S.geladen, integral: S.erg ? S.erg.integral : null };
+  }
+  function summeTreffer(p) {                           // Index des Rechtecks/Trapezes unter dem Zeiger (oder null)
+    const s = S.sum; if (!s || s.fehlt || !p) return null;
+    const x = wx(p.x), y = wy(p.y), tol = 3 / S.view.sy;
+    for (let i = 0; i < s.teile.length; i++) {
+      const t = s.teile[i];
+      if (x < t.x0 || x > t.x1) continue;
+      const oben = s.art === "trapez" ? (t.x1 > t.x0 ? t.y0 + (t.y1 - t.y0) * (x - t.x0) / (t.x1 - t.x0) : t.y0) : t.h;
+      return y >= Math.min(0, oben) - tol && y <= Math.max(0, oben) + tol ? i : null;
+    }
+    return null;
+  }
+  function tipZeigen() {                               // Anteil des Rechtecks/Trapezes am Gesamtwert, absolut und in Prozent
+    const s = S.sum, i = S.hover;
+    if (!s || s.fehlt || i === null || !tipPos) { sumTip.hidden = true; return; }
+    const t = s.teile[i], fn = NAME[s.fn].f, form = s.art === "trapez" ? "Trapez" : "Rechteck";
+    const pz = Number.isFinite(t.anteil) ? Zahl.dez(100 * t.anteil, 2) + " %" : "–";
+    const hoehe = s.art === "trapez"
+      ? `<i>${fn}</i>(${Zahl.dez(t.x0, 3)}) = ${Zahl.dez(t.y0, 4)} · <i>${fn}</i>(${Zahl.dez(t.x1, 3)}) = ${Zahl.dez(t.y1, 4)}`
+      : `Höhe <i>${fn}</i>(${Zahl.dez(t.xi, 3)}) = ${Zahl.dez(t.h, 4)}`;
+    sumTip.innerHTML = `<div class="kopf">${form} ${i + 1} von ${s.n} · [${Zahl.dez(t.x0, 3)}; ${Zahl.dez(t.x1, 3)}]</div><div>${hoehe}</div>` +
+      `<div class="anteil${t.wert < 0 ? " neg" : ""}">Anteil <b>${Zahl.dez(t.wert, 4)}</b> = <b>${pz}</b></div>` +
+      `<div class="dim">von ${s.zeichen}${tief(s.n)} = ${Zahl.dez(s.wert, 4)}${Number.isFinite(t.anteil) ? "" : " (Gesamtwert 0 – kein Prozentanteil)"}</div>`;
+    sumTip.hidden = false;
+    const w = sumTip.offsetWidth, h = sumTip.offsetHeight;          // neben den Zeiger; am Rand auf die andere Seite
+    let x = tipPos.x + 16, y = tipPos.y + 16;
+    if (x + w > W - 4) x = tipPos.x - 16 - w;
+    if (y + h > H - 4) y = tipPos.y - 16 - h;
+    sumTip.style.left = Math.max(4, x) + "px"; sumTip.style.top = Math.max(4, y) + "px";
+  }
+  function summeHover(p) {                             // Zeiger bewegt: Feld darunter hervorheben, Anzeige ein-/ausblenden
+    tipPos = p;
+    const i = summeTreffer(p);
+    if (i !== S.hover) { S.hover = i; zeichne(); }
+    tipZeigen();
+  }
+  function summeHTML() {                               // Ergebnisse: n, Δx, Summe, Integral und Abweichung
+    if (!S.summe.art) return "";
+    const s = S.sum, art = Summen.ARTEN[S.summe.art], fn = NAME[S.akt].f;
+    let h = `<div><h3 style="--c:${C.summe}"><span class="dot"></span>${art} von ${fn} über [${Zahl.dez(S.a, 3)}; ${Zahl.dez(S.b, 3)}]</h3>`;
+    if (!s) return h + `<span class="empty">${fn} ist ausgeblendet – in der Funktionsleiste einschalten.</span></div>`;
+    if (s.fehlt) return h + `<span class="empty">${fn} ist im Teilintervall [${Zahl.dez(s.fehlt[0], 3)}; ${Zahl.dez(s.fehlt[1], 3)}] nicht überall definiert – keine Summe.</span></div>`;
+    const z = `${s.zeichen}<sub>${s.n}</sub>`;
+    h += `<div class="int-row"><span>Teilintervalle n</span><span>${s.n}</span></div>
+      <div class="int-row"><span>Breite Δx = (b − a) / n</span><span>${Zahl.dez(s.dx, 4)}</span></div>
+      <div class="int-row"><span>${art} ${z}</span><span>${Zahl.dez(s.wert, 6)}</span></div>`;
+    if (s.integral !== null && s.integral !== undefined)
+      h += `<div class="int-row"><span>∫ ${fn}(x) dx</span><span>${Zahl.dez(s.integral, 6)}</span></div>
+      <div class="int-row"><span>${z} − ∫ ${fn}(x) dx</span><span>${Zahl.dez(s.wert - s.integral, 6)}</span></div>`;
+    if (S.a > S.b) h += `<span class="empty">a &gt; b: Vorzeichen umgekehrt (wie beim Integral).</span>`;
+    return h + `<span class="empty">Zeiger über ein ${s.art === "trapez" ? "Trapez" : "Rechteck"}: sein Anteil an ${z}</span></div>`;
+  }
+  const kritischeStellen = () => Polynom.nullstellen(Polynom.ableitung(S.c));   // mögliche Extremstellen: f′(x) = 0
+
+  // ----- Grad (der bearbeiteten Funktion)
+  const grad = $("grad"), gradOut = $("gradOut");
+  grad.value = S.n; gradOut.textContent = S.n;
+  grad.addEventListener("input", () => {
+    const n = +grad.value; gradOut.textContent = n;
+    if (n === S.n) return;
+    S.n = n; S.c = Polynom.standard(n); verteileStuetz(); render();
+  });
+
+  // ----- Schalter (Tangenten an H/T/W gelten für f und g, Punkt P bzw. Q für die bearbeitete Funktion)
+  for (const [id, key] of [["tNull", "null"], ["tExt", "ext"], ["tWende", "wende"], ["tInt", "integral"], ["tgH", "tH"], ["tgT", "tT"], ["tgW", "tW"], ["tStuetz", "stuetz"], ["tSchnitt", "schnitt"], ["tYAchse", "yachse"]]) {
+    const b = $(id);
+    b.addEventListener("click", () => { S.show[key] = !S.show[key]; b.setAttribute("aria-pressed", S.show[key]); render(); });
+  }
+  $("tgP").addEventListener("click", () => { S.pAn = !S.pAn; $("tgP").setAttribute("aria-pressed", S.pAn); if (S.pAn) pSichtbar(); render(); });
+  $("fit").addEventListener("click", () => ansichtAnpassen());
+
+  // ----- Bearbeiten: f | g
+  const wahlKnoepfe = [...document.querySelectorAll(".wahl button")];
+  function setzeAkt(k) {
+    if (!NAME[k]) throw new Error(`Unbekannte Funktion „${k}“ – möglich: f, g`);
+    lade(k); S.akt = k;
+    if (S.sek.an && W && !(Number.isFinite(f(S.sek.xA)) && Number.isFinite(f(S.sek.xB)))) sekPlatzieren();
+    wahlKnoepfe.forEach(b => b.setAttribute("aria-checked", b.dataset.fn === k));
+    document.querySelectorAll(".akt-f").forEach(e => { e.textContent = NAME[k].f; });
+    document.querySelectorAll(".akt-p").forEach(e => { e.textContent = NAME[k].P; });
+    document.querySelectorAll(".kb").forEach(e => { e.textContent = k === "f" ? "a" : "b"; });
+    $("tgP").setAttribute("aria-pressed", S.pAn); pMeldung("");
+    render();
+  }
+  wahlKnoepfe.forEach(b => b.addEventListener("click", () => setzeAkt(b.dataset.fn)));
+  wahlKnoepfe.forEach((b, i) => b.addEventListener("keydown", e => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+    e.preventDefault(); const z = wahlKnoepfe[(i + 1) % wahlKnoepfe.length]; z.focus(); setzeAkt(z.dataset.fn);
+  }));
+
+  // ----- Funktionsleisten: F, f, f′, f″, f‴ und G, g, g′, g″, g‴ (Wechselschalter, beliebig kombinierbar)
+  // k = −1 Stammfunktion (mit F(0) = 0 bzw. G(0) = 0), 0 Funktion, 1 … 3 Ableitungen
+  function kurvenListe(fk = S.geladen) {
+    const f = NAME[fk].f, F = NAME[fk].F, v = n => `<span class="var">${n}</span>`, fa = s => fk === "f" ? (s === "f" ? "graph" : "k-" + s) : "g-" + (s === "f" ? "graph" : s);
+    return [
+      { key: "F", k: -1, name: F, html: v(F), farbe: fa("F") },
+      { key: "f", k: 0, name: f, html: v(f), farbe: fa("f") },
+      { key: "d1", k: 1, name: f + "′", html: v(f) + "′", farbe: fa("d1") },
+      { key: "d2", k: 2, name: f + "″", html: v(f) + "″", farbe: fa("d2") },
+      { key: "d3", k: 3, name: f + "‴", html: v(f) + "‴", farbe: fa("d3") }];
+  }
+  const kurvenKnoepfe = [...document.querySelectorAll(".kurven .kchip")];
+  const kurvenKnoepfeSetzen = () => kurvenKnoepfe.forEach(b => b.setAttribute("aria-pressed", mit(b.closest(".kurven").dataset.fn, () => !!S.kurven[b.dataset.k])));
+  kurvenKnoepfe.forEach(b => b.addEventListener("click", () => {
+    const fn = b.closest(".kurven").dataset.fn, key = b.dataset.k;
+    mit(fn, () => { S.kurven[key] = !S.kurven[key]; spurSchalten(fn, key, S.kurven[key]); });
+    kurvenKnoepfeSetzen(); render();
+  }));
+  kurvenKnoepfeSetzen();
+  function koeffK(c, k) {                              // Koeffizienten der Stammfunktion (k = −1) bzw. der k-ten Ableitung
+    if (k < 0) return Polynom.trim(Polynom.stammfunktion(c));
+    for (let i = 0; i < k; i++) c = Polynom.ableitung(c);
+    return Polynom.trim(c);
+  }
+  function kurvenDaten(mitGrenzen = true, ergF = null) {   // eingeblendete Kurven der geladenen Funktion
+    return kurvenListe().filter(K => S.kurven[K.key]).map(K => {
+      const c = K.k === 0 ? S.c : koeffK(S.c, K.k);
+      const erg = K.k === 0 && ergF ? ergF : mitGrenzen ? Polynom.analysiere(c, S.a, S.b) : Polynom.analysiere(c);
+      return { ...K, fn: S.geladen, c, g: x => Polynom.wert(c, x), erg };
+    });
+  }
+
+  $("reset").addEventListener("click", () => {
+    mit("f", () => { S.c = Polynom.standard(S.n); });
+    mit("g", () => { S.c = STANDARD_G.slice(); S.n = 2; });
+    S.a = -1; S.b = 1; standardAnsicht(); for (const k of ["f", "g"]) mit(k, verteileStuetz); render();
+  });
+
+  // ----- Darstellung: dunkel (3Blue1Brown) | hell (Pearson-Schulbuch)
+  const designKnoepfe = [...document.querySelectorAll(".design button")];
+  function setzeDesign(name, merken = true, zeichnen = true) {
+    if (!DESIGNS.includes(name)) throw new Error(`Unbekanntes Design „${name}“ – möglich: ${DESIGNS.join(", ")}`);
+    if (name === "3b1b") delete document.documentElement.dataset.design; else document.documentElement.dataset.design = name;
+    designKnoepfe.forEach(b => b.setAttribute("aria-checked", b.dataset.design === name));
+    if (merken) { try { localStorage.setItem("polynomExplorer.design", name); } catch {} }
+    leseFarben(); if (zeichnen) render();
+  }
+  const aktuellesDesign = () => document.documentElement.dataset.design || "3b1b";
+  designKnoepfe.forEach(b => b.addEventListener("click", () => setzeDesign(b.dataset.design)));
+  designKnoepfe.forEach((b, i) => b.addEventListener("keydown", e => {            // Pfeiltasten wie bei Optionsfeldern
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+    e.preventDefault(); const z = designKnoepfe[(i + 1) % designKnoepfe.length]; z.focus(); setzeDesign(z.dataset.design);
+  }));
+  {
+    let gemerkt = null; try { gemerkt = localStorage.getItem("polynomExplorer.design"); } catch {}
+    const start = opts.design || gemerkt;
+    if (DESIGNS.includes(start)) setzeDesign(start, false, false);
+  }
+
+  // ----- Koordinaten
+  const X = x => W / 2 + (x - S.view.cx) * S.view.sx;
+  const Y = y => H / 2 - (y - S.view.cy) * S.view.sy;
+  const wx = px => S.view.cx + (px - W / 2) / S.view.sx;
+  const wy = py => S.view.cy - (py - H / 2) / S.view.sy;
+  const f = x => Polynom.wert(S.c, x);               // Funktionswert der geladenen Funktion (f oder g)
+
+  function standardAnsicht() {
+    const s = Math.max(W, 1) / 13.5;
+    S.view = { cx: 0, cy: 0, sx: s, sy: s };
+  }
+
+  function verteileStuetz() {
+    const x0 = wx(W * 0.05), x1 = wx(W * 0.95), y0 = wy(H * 0.95), y1 = wy(H * 0.05);
+    const vis = [];
+    for (let i = 0; i <= 2000; i++) { const x = x0 + (x1 - x0) * i / 2000, y = f(x); if (y > y0 && y < y1) vis.push(x); }
+    const pool = vis.length >= 50 ? vis : Array.from({ length: 2001 }, (_, i) => x0 + (x1 - x0) * i / 2000);
+    if (S.n === 0) S.sx = [pool[Math.floor(pool.length / 2)]];
+    else S.sx = Array.from({ length: S.n + 1 }, (_, k) => pool[Math.floor((0.04 + 0.92 * k / S.n) * (pool.length - 1))]);
+    S.sy = S.sx.map(f);
+  }
+
+  function ansichtAnpassen() {
+    let liste = [];
+    for (const k of ["f", "g"]) mit(k, () => { liste.push(...kurvenDaten(false)); });
+    if (!liste.length) liste = mit("f", () => [{ g: x => Polynom.wert(S.c, x), erg: Polynom.analysiere(S.c) }]);
+    const xs = [], ys = [0];
+    for (const { erg: e } of liste) {
+      xs.push(...e.nullstellen, ...e.extrema.map(p => p.x), ...e.wendepunkte.map(p => p.x), ...e.sattelpunkte.map(p => p.x));
+      ys.push(...e.extrema.map(p => p.y), ...e.wendepunkte.map(p => p.y), ...e.sattelpunkte.map(p => p.y));
+    }
+    if (S.show.integral || S.summe.art) xs.push(S.a, S.b);
+    let lo = xs.length ? Math.min(...xs) : -3, hi = xs.length ? Math.max(...xs) : 3;
+    const mid = (lo + hi) / 2, half = Math.max((hi - lo) / 2 + 1, 3) * 1.12;
+    if (ys.length < 3) for (const { g } of liste) { const v = []; for (let i = 0; i <= 400; i++) v.push(g(mid - half + 2 * half * i / 400)); v.sort((p, q) => p - q); ys.push(v[40], v[360]); }
+    let ylo = Math.min(...ys), yhi = Math.max(...ys); const pad = Math.max((yhi - ylo) * 0.18, 1);
+    ylo -= pad; yhi += pad;
+    S.view = { cx: mid, cy: (ylo + yhi) / 2, sx: W / (2 * half), sy: H / (yhi - ylo) };
+    for (const k of ["f", "g"]) mit(k, verteileStuetz);
+    render();
+  }
+
+  // ----- Zeichnen
+  function niceStep(raw) { const p = 10 ** Math.floor(Math.log10(raw)), m = raw / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; }
+  const clampP = v => Math.max(-1e5, Math.min(1e5, v));
+  const tief = k => String(k).split("").map(d => "₀₁₂₃₄₅₆₇₈₉"[d]).join("");
+
+  function zeichne() {
+    const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = C.stage; ctx.fillRect(0, 0, W, H);
+    const xmin = wx(0), xmax = wx(W), ymin = wy(H), ymax = wy(0);
+    const stx = niceStep(72 / S.view.sx), sty = niceStep(72 / S.view.sy);
+
+    // Gitter (fein + grob)
+    const linien = (step, color, alpha, lw) => {
+      ctx.strokeStyle = color; ctx.globalAlpha = alpha; ctx.lineWidth = lw; ctx.beginPath();
+      for (let x = Math.ceil(xmin / step.x) * step.x; x <= xmax; x += step.x) { const p = Math.round(X(x)) + 0.5; ctx.moveTo(p, 0); ctx.lineTo(p, H); }
+      for (let y = Math.ceil(ymin / step.y) * step.y; y <= ymax; y += step.y) { const p = Math.round(Y(y)) + 0.5; ctx.moveTo(0, p); ctx.lineTo(W, p); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+    };
+    linien({ x: stx / 2, y: sty / 2 }, C["grid-fine"], D["gitter-fein-alpha"], 0.7);
+    linien({ x: stx, y: sty }, C.grid, D["gitter-alpha"], 1.1);
+
+    // Achsen
+    const ax = X(0), ay = Y(0);
+    ctx.strokeStyle = C.fg; ctx.lineWidth = 2;
+    ctx.beginPath(); if (ay >= 0 && ay <= H) { ctx.moveTo(0, ay); ctx.lineTo(W, ay); } if (ax >= 0 && ax <= W) { ctx.moveTo(ax, 0); ctx.lineTo(ax, H); } ctx.stroke();
+    if (D.pfeile) {                                  // Pfeilspitzen wie im Schulbuch
+      ctx.fillStyle = C.fg; ctx.beginPath();
+      if (ay > 0 && ay < H) { ctx.moveTo(W, ay); ctx.lineTo(W - 12, ay - 5); ctx.lineTo(W - 12, ay + 5); ctx.closePath(); }
+      if (ax > 0 && ax < W) { ctx.moveTo(ax, 0); ctx.lineTo(ax - 5, 12); ctx.lineTo(ax + 5, 12); ctx.closePath(); }
+      ctx.fill();
+    }
+
+    // Beschriftung
+    const lx = Math.min(Math.max(ay, 8), H - 26), ly = Math.min(Math.max(ax, 40), W - 8);
+    ctx.fillStyle = C.fg; ctx.font = `14px ${FONT_MATH}`;
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    for (let x = Math.ceil(xmin / stx) * stx; x <= xmax; x += stx) {
+      if (Math.abs(x) < stx / 1e6) continue; const p = X(x); if (p < 12 || p > W - 12) continue;
+      ctx.fillRect(p - 1, lx - 5, 2, 10); ctx.fillText(Zahl.dez(x, 2), p, lx + 8);
+    }
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (let y = Math.ceil(ymin / sty) * sty; y <= ymax; y += sty) {
+      if (Math.abs(y) < sty / 1e6) continue; const p = Y(y); if (p < 12 || p > H - 12) continue;
+      ctx.fillRect(ly - 5, p - 1, 10, 2); ctx.fillText(Zahl.dez(y, 2), ly - 9, p);
+    }
+    ctx.font = `italic 20px ${FONT_MATH}`;
+    ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText("x", W - 10, lx - 6);
+    ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillText("y", ly + 10, 8);
+
+    // Integralflächen: f in den Integralfarben, g in seiner Kurvenfarbe
+    for (const k of ["g", "f"]) mit(k, () => {
+      if (!(S.show.integral && S.kurven.f && isFinite(S.a) && isFinite(S.b) && S.a !== S.b)) return;
+      const lo = Math.min(S.a, S.b), hi = Math.max(S.a, S.b), N = 600;
+      const pfad = SvgExport.neuerPfad(); pfad.moveTo(X(lo), Y(0));
+      for (let i = 0; i <= N; i++) { const x = lo + (hi - lo) * i / N; pfad.lineTo(X(x), clampP(Y(f(x)))); }
+      pfad.lineTo(X(hi), Y(0)); pfad.closePath();
+      const farben = k === "f" ? [[C["int-pos"], true], [C["int-neg"], false]] : [[C["g-graph"], true], [C["g-graph"], false]];
+      for (const [farbe, oben] of farben) {
+        ctx.save(); ctx.beginPath(); oben ? ctx.rect(0, 0, W, Y(0)) : ctx.rect(0, Y(0), W, H - Y(0)); ctx.clip();
+        ctx.globalAlpha = (oben ? D["flaeche-pos"] : D["flaeche-neg"]) * (k === "f" ? 1 : 0.6); ctx.fillStyle = farbe; ctx.fill(pfad); ctx.restore();
+      }
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = k === "f" ? C["int-pos"] : C["g-graph"]; ctx.lineWidth = 1.5;
+      for (const g of [S.a, S.b]) { ctx.beginPath(); ctx.moveTo(X(g), Y(0)); ctx.lineTo(X(g), clampP(Y(f(g)))); ctx.stroke(); }
+      ctx.setLineDash([]);
+    });
+
+    // Riemann-Summe der bearbeiteten Funktion: Rechtecke bzw. Trapeze, das Feld unter dem Zeiger hervorgehoben
+    let summenKasten = null;
+    if (S.sum && !S.sum.fehlt) {
+      const s = S.sum, y0 = Y(0), wenige = s.n <= 60;
+      s.teile.forEach((t, i) => {
+        const farbe = t.h < 0 ? C["summe-neg"] : C.summe, an = i === S.hover, xa = X(t.x0), xb = X(t.x1);
+        ctx.beginPath(); ctx.moveTo(xa, y0);
+        if (s.art === "trapez") { ctx.lineTo(xa, clampP(Y(t.y0))); ctx.lineTo(xb, clampP(Y(t.y1))); }
+        else { const yh = clampP(Y(t.h)); ctx.lineTo(xa, yh); ctx.lineTo(xb, yh); }
+        ctx.lineTo(xb, y0); ctx.closePath();
+        ctx.fillStyle = farbe; ctx.globalAlpha = an ? Math.min(1, 2.2 * D["summe-alpha"]) : D["summe-alpha"]; ctx.fill();
+        ctx.globalAlpha = 1; ctx.strokeStyle = farbe; ctx.lineWidth = an ? 2.6 : wenige ? 1.4 : 0.8; ctx.stroke();
+      });
+      if (wenige && s.art !== "trapez") for (const t of s.teile) {      // Stelle ξ, an der die Höhe genommen wird
+        ctx.beginPath(); ctx.arc(X(t.xi), clampP(Y(t.h)), 3.4, 0, 2 * Math.PI); ctx.fillStyle = t.h < 0 ? C["summe-neg"] : C.summe; ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = C.kontur; ctx.stroke();
+      }
+      const z1 = `${s.name} ${s.zeichen}${tief(s.n)} = ${Zahl.dez(s.wert, 4)}`;
+      const z2 = `n = ${s.n} · Δx = ${Zahl.dez(s.dx, 4)}` + (s.integral !== null && s.integral !== undefined ? ` · ∫ = ${Zahl.dez(s.integral, 4)}` : "");
+      ctx.font = `600 15px ${FONT_MATH}`; let w = ctx.measureText(z1).width;
+      ctx.font = `13px ${FONT_MATH}`; w = Math.max(w, ctx.measureText(z2).width) + 18;
+      summenKasten = { x: W - w - 10, y: 10, w, h: 46, z1, z2 };
+    }
+
+    // Tangenten (Linien jetzt, Beschriftungen nach den Punkten); Tangenten an g gestrichelt
+    const tangLabels = [];
+    for (const k of ["g", "f"]) mit(k, () => {
+      for (const t of tangentenSichtbar()) {
+        const farbe = tFarbe(t.typ), g = x => t.m * (x - t.x0) + t.y0;
+        const p1 = { x: 0, y: Y(g(wx(0))) }, p2 = { x: W, y: Y(g(wx(W))) }, dy = p2.y - p1.y;
+        let t0 = 0, t1 = 1;
+        if (Math.abs(dy) < 1e-9) { if (p1.y < 0 || p1.y > H) continue; }
+        else { const u = (0 - p1.y) / dy, v = (H - p1.y) / dy; t0 = Math.max(0, Math.min(u, v)); t1 = Math.min(1, Math.max(u, v)); if (t0 >= t1) continue; }
+        const P = s => ({ x: p1.x + (p2.x - p1.x) * s, y: p1.y + dy * s });
+        const A = P(t0), B = P(t1);
+        ctx.strokeStyle = farbe; ctx.lineWidth = 2.2; ctx.globalAlpha = 0.95; if (k === "g") ctx.setLineDash([9, 6]);
+        ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke(); ctx.globalAlpha = 1; ctx.setLineDash([]);
+        tangLabels.push({ t, farbe, P, t0, t1 });
+      }
+    });
+
+    // Graphen: zuerst Stammfunktionen und Ableitungen, dann g, zuletzt f (mit Glanz) obenauf
+    const alle = [];
+    for (const k of ["f", "g"]) mit(k, () => { alle.push(...S.kd); });
+    const rang = K => K.k !== 0 ? 0 : K.fn === "g" ? 1 : 2;
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+    for (const K of alle.sort((p, q) => rang(p) - rang(q))) {
+      const sp = spurVon(K), tol = 0.6 / S.view.sx;       // Spur-Kurven nur im vom Trace-Punkt überstrichenen Bereich
+      const gz = sp ? (x => sp.some(([a, b]) => x >= a - tol && x <= b + tol) ? K.g(x) : NaN) : K.g;
+      const graph = SvgExport.neuerPfad();
+      let offen = false;
+      for (let px = -2; px <= W + 2; px += 1) {
+        const y = gz(wx(px));
+        if (!Number.isFinite(y)) { offen = false; continue; }
+        const py = clampP(Y(y));
+        if (offen) graph.lineTo(px, py); else { graph.moveTo(px, py); offen = true; }
+      }
+      ctx.strokeStyle = C[K.farbe];
+      if (K.k === 0 && D.glanz > 0) { ctx.globalAlpha = D.glanz; ctx.lineWidth = 9; ctx.stroke(graph); }
+      ctx.globalAlpha = 1; ctx.lineWidth = K.k === 0 ? D["graph-lw"] : 0.85 * D["graph-lw"]; ctx.stroke(graph);
+    }
+
+    // Charakteristische Punkte; Punkte aller Kurven außer f tragen den Kurvennamen und einen Ring in Kurvenfarbe
+    const belegt = [], k2 = (x, y) => `(${Zahl.dez(x, 2)} | ${Zahl.dez(y, 2)})`;
+    if (summenKasten) belegt.push(summenKasten);
+    const punkte = [];
+    if (S.show.schnitt) for (const q of S.schnitte) punkte.push([q.x, q.y, C.schnitt, `${q.A.name} ∩ ${q.B.name}: ${k2(q.x, q.y)}`, null]);
+    if (S.show.yachse) for (const q of yAbschnitte()) if (Number.isFinite(q.y)) punkte.push([0, q.y, C.yachse, `${q.K.name}: ${k2(0, q.y)}`, C[q.K.farbe]]);
+    for (const k of ["f", "g"]) mit(k, () => {
+      if (S.tP) punkte.push([S.tP.x0, S.tP.y0, C["t-frei"], nm().P + k2(S.tP.x0, S.tP.y0), k === "g" ? C["g-graph"] : null]);
+      for (const K of S.kd) {
+        const e = K.erg, istF = k === "f" && K.k === 0, v = istF ? "" : K.name + ": ", ring = istF ? null : C[K.farbe];
+        const sp = spurVon(K), drin = x => !sp || sp.some(([a, b]) => x >= a - 1e-9 && x <= b + 1e-9);   // Spur: nur überstrichene Punkte
+        if (S.show.null) e.nullstellen.forEach((x, i) => drin(x) && punkte.push([x, 0, C.null, `${v}N${tief(i + 1)}${k2(x, 0)}`, ring]));
+        if (S.show.ext) { e.extrema.forEach(p => drin(p.x) && punkte.push([p.x, p.y, C.ext, v + p.typ + k2(p.x, p.y), ring])); e.sattelpunkte.forEach(p => drin(p.x) && punkte.push([p.x, p.y, C.ext, v + "S" + k2(p.x, p.y), ring])); }
+        if (S.show.wende) e.wendepunkte.forEach(p => drin(p.x) && punkte.push([p.x, p.y, C.wende, v + "W" + k2(p.x, p.y), ring]));
+      }
+      if (S.tP) {                                      // Griff: zeigt an, dass P bzw. Q ziehbar ist
+        const px = X(S.tP.x0), py = Y(S.tP.y0);
+        ctx.beginPath(); ctx.arc(px, py, drag && drag.art === "tpunkt" && drag.fn === k ? 15 : 12, 0, 2 * Math.PI);
+        ctx.strokeStyle = C["t-frei"]; ctx.lineWidth = 2; ctx.globalAlpha = 0.75; ctx.stroke(); ctx.globalAlpha = 1;
+      }
+    });
+    ctx.font = `14px ${FONT_MATH}`; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    for (const [x, y, farbe, txt, ring] of punkte) {
+      const px = X(x), py = Y(y); if (px < -10 || px > W + 10 || py < -10 || py > H + 10) continue;
+      ctx.beginPath(); ctx.arc(px, py, 6, 0, 2 * Math.PI); ctx.fillStyle = farbe; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = C.kontur; ctx.stroke();
+      if (ring) { ctx.beginPath(); ctx.arc(px, py, 8.5, 0, 2 * Math.PI); ctx.lineWidth = 2.2; ctx.strokeStyle = ring; ctx.stroke(); }
+    }
+    for (const [x, y, farbe, txt] of punkte) {
+      const px = X(x), py = Y(y); if (px < 0 || px > W || py < 0 || py > H) continue;
+      const tw = ctx.measureText(txt).width + 10, th = 20;
+      for (const [ox, oy] of [[9, -16], [9, 16], [-9 - tw, -16], [-9 - tw, 16]]) {
+        const r = { x: px + ox, y: py + oy - th / 2, w: tw, h: th };
+        if (r.x < 2 || r.x + r.w > W - 2 || r.y < 2 || r.y + r.h > H - 2) continue;
+        if (belegt.some(b => r.x < b.x + b.w && b.x < r.x + r.w && r.y < b.y + b.h && b.y < r.y + r.h)) continue;
+        belegt.push(r);
+        ctx.fillStyle = C["label-bg"]; ctx.beginPath(); ctx.roundRect(r.x, r.y, r.w, r.h, 3); ctx.fill();
+        ctx.fillStyle = farbe; ctx.fillText(txt, r.x + 5, r.y + th / 2 + 1);
+        break;
+      }
+    }
+
+    // Tangenten-Beschriftungen  t_H₁(x) = …  bzw. für g  t_gH₁(x) = …
+    for (const { t, farbe, P, t0, t1 } of tangLabels) {
+      const teile = mathTeile(t);
+      const breite = teile.reduce((s, q) => { ctx.font = q.font; return s + ctx.measureText(q.s).width; }, 0) + 12, hoehe = 24;
+      platz: for (const frac of [0.82, 0.18, 0.65, 0.35, 0.5]) {
+        const q = P(t0 + (t1 - t0) * frac);
+        for (const oy of [-18, 18]) {
+          const r = { x: q.x - breite / 2, y: q.y + oy - hoehe / 2, w: breite, h: hoehe };
+          if (r.x < 2 || r.x + r.w > W - 2 || r.y < 2 || r.y + r.h > H - 2) continue;
+          if (belegt.some(b => r.x < b.x + b.w && b.x < r.x + r.w && r.y < b.y + b.h && b.y < r.y + r.h)) continue;
+          belegt.push(r);
+          ctx.fillStyle = C["label-bg"]; ctx.beginPath(); ctx.roundRect(r.x, r.y, r.w, r.h, 3); ctx.fill();
+          ctx.strokeStyle = farbe; ctx.lineWidth = 1; ctx.globalAlpha = 0.6; ctx.stroke(); ctx.globalAlpha = 1;
+          let cx = r.x + 6; ctx.fillStyle = farbe; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+          for (const p of teile) { ctx.font = p.font; ctx.fillText(p.s, cx, r.y + 16 + (p.dy || 0)); cx += ctx.measureText(p.s).width; }
+          break platz;
+        }
+      }
+    }
+
+    // Trace: gestrichelte Senkrechte an der Stelle x, Punkt auf der x-Achse und auf allen sichtbaren Graphen
+    if (S.trace.an) {
+      const tx = S.trace.x, px = X(tx), col = C.trace, ay = Math.min(Math.max(Y(0), 8), H - 8);
+      const etikett = (txt, farbe, kandidaten) => {
+        ctx.font = `14px ${FONT_MATH}`;
+        const w = ctx.measureText(txt).width + 10, h = 20;
+        for (const [rx, cy] of kandidaten) {
+          const r = { x: rx === "l" ? px - 12 - w : px + 12, y: cy - h / 2, w, h };
+          if (r.x < 2 || r.x + r.w > W - 2 || r.y < 2 || r.y + r.h > H - 2) continue;
+          if (belegt.some(b => r.x < b.x + b.w && b.x < r.x + r.w && r.y < b.y + b.h && b.y < r.y + r.h)) continue;
+          belegt.push(r);
+          ctx.fillStyle = C["label-bg"]; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.roundRect(r.x, r.y, r.w, r.h, 3); ctx.fill(); ctx.globalAlpha = 1;
+          ctx.fillStyle = farbe; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(txt, r.x + 5, r.y + h / 2 + 1);
+          return;
+        }
+      };
+      ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke(); ctx.restore();
+      const werte = traceWerte().filter(({ y }) => Number.isFinite(y));
+      for (const { K, y } of werte) {
+        const py = Y(y); if (py < -10 || py > H + 10) continue;
+        ctx.beginPath(); ctx.arc(px, py, 6.5, 0, 2 * Math.PI); ctx.fillStyle = C[K.farbe]; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = C.kontur; ctx.stroke();
+      }
+      ctx.beginPath(); ctx.arc(px, ay, 7, 0, 2 * Math.PI); ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = C.kontur; ctx.stroke();
+      ctx.beginPath(); ctx.arc(px, ay, drag && drag.art === "trace" ? 15 : 12, 0, 2 * Math.PI); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.globalAlpha = 0.75; ctx.stroke(); ctx.globalAlpha = 1;
+      const k2t = (x, y) => `(${Zahl.dez(x, 2)} | ${Zahl.dez(y, 2)})`;
+      etikett(k2t(tx, 0), col, [["r", ay + 18], ["l", ay + 18], ["r", ay - 18], ["l", ay - 18]]);
+      for (const { K, y } of werte) {
+        const py = Y(y); if (py < 0 || py > H) continue;
+        etikett(`${K.name}: ${k2t(tx, y)}`, C[K.farbe], [["r", py - 12], ["l", py - 12], ["r", py + 12], ["l", py + 12], ["r", py - 30], ["l", py - 30], ["r", py + 30], ["l", py + 30]]);
+      }
+    }
+
+    // Sekante durch A und B mit Steigungsdreieck (Δx waagerecht von A aus, Δy senkrecht bis B)
+    if (S.sk && !S.sk.fehlt) {
+      const s = S.sk, col = C.sekante, F = (st, px) => `${st}${px}px ${FONT_MATH}`;
+      const A = { x: X(s.xA), y: Y(s.yA) }, B = { x: X(s.xB), y: Y(s.yB) }, E = { x: B.x, y: A.y };
+      const schild = (txt, kandidaten, teile = null) => {       // beschriftetes Kästchen ohne Überdeckung
+        ctx.font = F("", 15);
+        const w = teile ? teile.reduce((b, q) => { ctx.font = q.font; return b + ctx.measureText(q.s).width; }, 0) + 12 : ctx.measureText(txt).width + 12, h = 23;
+        for (const [cx, cy] of kandidaten) {
+          const r = { x: cx - w / 2, y: cy - h / 2, w, h };
+          if (r.x < 2 || r.x + r.w > W - 2 || r.y < 2 || r.y + r.h > H - 2) continue;
+          if (belegt.some(b => r.x < b.x + b.w && b.x < r.x + r.w && r.y < b.y + b.h && b.y < r.y + r.h)) continue;
+          belegt.push(r);
+          ctx.fillStyle = C["label-bg"]; ctx.globalAlpha = 0.88; ctx.beginPath(); ctx.roundRect(r.x, r.y, r.w, r.h, 3); ctx.fill(); ctx.globalAlpha = 1;
+          ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke();
+          ctx.fillStyle = col; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+          if (teile) { let x = r.x + 6; for (const q of teile) { ctx.font = q.font; ctx.fillText(q.s, x, r.y + 16 + (q.dy || 0)); x += ctx.measureText(q.s).width; } }
+          else { ctx.font = F("", 15); ctx.fillText(txt, r.x + 6, r.y + 16); }
+          return true;
+        }
+        return false;
+      };
+      if (!s.gleich) {
+        const g = x => s.m * (x - s.xA) + s.yA;
+        ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.globalAlpha = 0.9;
+        ctx.beginPath(); ctx.moveTo(0, clampP(Y(g(wx(0))))); ctx.lineTo(W, clampP(Y(g(wx(W))))); ctx.stroke();
+        ctx.globalAlpha = 0.15; ctx.fillStyle = col;
+        ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(E.x, E.y); ctx.lineTo(B.x, B.y); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = 1; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(E.x, E.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+        const rw = 10, ux = Math.sign(A.x - E.x) || 1, uy = Math.sign(B.y - E.y) || 1;   // rechter Winkel
+        if (Math.abs(A.x - E.x) > 2.5 * rw && Math.abs(B.y - E.y) > 2.5 * rw) {
+          ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(E.x + ux * rw, E.y); ctx.lineTo(E.x + ux * rw, E.y + uy * rw); ctx.lineTo(E.x, E.y + uy * rw); ctx.stroke();
+        }
+        // Δx unter bzw. über der waagerechten Kathete, Δy neben der senkrechten Kathete (jeweils außerhalb des Dreiecks)
+        const aussenY = B.y < A.y ? 1 : -1, aussenX = -ux;
+        schild(`Δx = ${Zahl.dez(s.dx, 2)}`, [[(A.x + E.x) / 2, A.y + aussenY * 17], [(A.x + E.x) / 2, A.y - aussenY * 17]]);
+        const tw = (() => { ctx.font = F("", 15); return ctx.measureText(`Δy = ${Zahl.dez(s.dy, 2)}`).width + 12; })();
+        schild(`Δy = ${Zahl.dez(s.dy, 2)}`, [[E.x + aussenX * (tw / 2 + 8), (E.y + B.y) / 2], [E.x - aussenX * (tw / 2 + 8), (E.y + B.y) / 2]]);
+        // Sekantengleichung s_AB(x) = m·x + n auf der Geraden außerhalb des Dreiecks
+        const teile = [{ s: "s", font: F("italic ", 17) }, { s: "AB", font: F("", 11), dy: 4 }, { s: "(", font: F("", 16) },
+                       { s: "x", font: F("italic ", 16) }, { s: ") = ", font: F("", 16) }];
+        for (const q of geradeText(s.m, s.n).split(/(x)/)) if (q) teile.push({ s: q, font: F(q === "x" ? "italic " : "", 16) });
+        const lauf = [-0.45, 1.45, -0.9, 1.9, -0.2, 1.2, 0.5].map(t => {
+          const x = s.xA + t * s.dx; return [X(x), Y(g(x)) - 20];
+        });
+        schild(null, lauf, teile);
+      }
+      for (const [P, x, y] of [["A", s.xA, s.yA], ["B", s.xB, s.yB]]) {
+        const px = X(x), py = Y(y);
+        ctx.beginPath(); ctx.arc(px, py, 7, 0, 2 * Math.PI); ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = C.kontur; ctx.stroke();
+        ctx.beginPath(); ctx.arc(px, py, drag && drag.art === "sekpunkt" && drag.P === P ? 15 : 12, 0, 2 * Math.PI);
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.globalAlpha = 0.75; ctx.stroke(); ctx.globalAlpha = 1;
+        const links = (P === "A") === (s.xA <= s.xB), txt = `${P}(${Zahl.dez(x, 2)} | ${Zahl.dez(y, 2)})`;
+        ctx.font = F("", 15); const w = ctx.measureText(txt).width + 12;
+        const dxl = links ? -(w / 2 + 14) : w / 2 + 14;
+        schild(txt, [[px + dxl, py - 18], [px + dxl, py + 18], [px - dxl, py - 18], [px - dxl, py + 18],
+                     [px, py - 30], [px, py + 30], [px + dxl, py - 40], [px + dxl, py + 40], [px - dxl, py - 40], [px - dxl, py + 40]]);
+      }
+    }
+
+    // Integrationsgrenzen als ziehbare Marken auf der x-Achse
+    if (S.show.integral || S.sum) {
+      const hy = Math.min(Math.max(Y(0), 12), H - 12);
+      for (const [g, nm] of [[S.a, "a"], [S.b, "b"]]) {
+        const px = X(g); if (px < -12 || px > W + 12) continue;
+        ctx.fillStyle = C["int-pos"]; ctx.strokeStyle = C.kontur; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.roundRect(px - 10, hy - 10, 20, 20, 4); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = C["marke-text"]; ctx.font = `italic 600 17px ${FONT_MATH}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(nm, px, hy + 1);
+        if (drag && drag.art === "grenze" && drag.key === nm) {
+          const txt = `${nm} = ${Zahl.dez(g, 3)}`; ctx.font = `14px ${FONT_MATH}`;
+          const tw = ctx.measureText(txt).width + 10, oben = f(g) < 0, ry = oben ? hy - 38 : hy + 16;
+          ctx.fillStyle = C["label-bg"]; ctx.beginPath(); ctx.roundRect(px - tw / 2, ry, tw, 22, 3); ctx.fill();
+          ctx.fillStyle = C["int-pos"]; ctx.fillText(txt, px, ry + 12);
+        }
+      }
+    }
+
+    // Stützpunkte (ziehbar): weiß für f, in der Kurvenfarbe für g
+    for (const k of ["g", "f"]) mit(k, () => {
+      if (!S.show.stuetz || !S.kurven.f) return;
+      ctx.lineWidth = 2; ctx.strokeStyle = k === "f" ? C.stuetz : C["g-graph"];
+      S.sx.forEach((x, i) => { const px = X(x), py = Y(S.sy[i]); ctx.beginPath(); ctx.arc(px, py, 7, 0, 2 * Math.PI); ctx.fillStyle = C["stuetz-fill"]; ctx.fill(); ctx.stroke(); });
+    });
+
+    // Gesamtwert der Riemann-Summe oben rechts
+    if (summenKasten) {
+      const k = summenKasten;
+      ctx.fillStyle = C["label-bg"]; ctx.globalAlpha = 0.92; ctx.beginPath(); ctx.roundRect(k.x, k.y, k.w, k.h, 4); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = C.summe; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = C.summe; ctx.font = `600 15px ${FONT_MATH}`; ctx.fillText(k.z1, k.x + 9, k.y + 19);
+      ctx.fillStyle = C.fg; ctx.font = `13px ${FONT_MATH}`; ctx.fillText(k.z2, k.x + 9, k.y + 37);
+    }
+  }
+
+  // ----- Frei verschiebbare Tangente in P (f) bzw. Q (g) – wie _tangente_p_berechnen in Python
+  function tangenteP() {
+    const y0 = f(S.tx); if (!Number.isFinite(y0)) return null;
+    const t = Polynom.tangente(S.c, S.tx);
+    if (Number.isFinite(t.m) && Math.abs(t.m) < 1e-9) { t.m = 0; t.n = y0; }   // Rundungsrauschen (z. B. an Extrema)
+    return { ...t, x0: S.tx, y0, typ: nm().P, nr: "", fn: S.geladen };
+  }
+  function pSichtbar() {                               // P bzw. Q in den sichtbaren Bereich holen
+    const ok = x => { const y = f(x); return Number.isFinite(y) && X(x) > 0 && X(x) < W && Y(y) > 0 && Y(y) < H; };
+    if (!W || ok(S.tx)) return;
+    for (const q of [0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.5, 0.9, 0.1]) { const x = wx(W * q); if (ok(x)) { S.tx = x; return; } }
+  }
+
+  // ----- Koordinaten von P bzw. Q direkt eingeben (x -> y = f(x); y -> nächstgelegene Stelle mit f(x) = y)
+  const pxIn = $("px"), pyIn = $("py"), pHinweis = $("pHinweis");
+  function stellenMitWert(y) {
+    const c = S.c.slice(); c[0] -= y;
+    return c.slice(1).every(a => a === 0) ? (Math.abs(c[0]) < 1e-12 ? [S.tx] : []) : Polynom.nullstellen(c);
+  }
+  function pMeldung(text, fehler = false) { pHinweis.textContent = text; pHinweis.classList.toggle("fehler", fehler); }
+  function pEingabe(welche, inp) {
+    const v = Zahl.parse(inp.value), fn = nm().f, P = nm().P;
+    if (v === null || !Number.isFinite(v)) { inp.classList.add("bad"); pMeldung("Ungültige Eingabe", true); return; }
+    inp.classList.remove("bad");
+    if (welche === "x") {
+      if (!Number.isFinite(f(v))) { pMeldung(`${fn} ist an der Stelle x = ${Zahl.dez(v, 3)} nicht definiert.`, true); return; }
+      S.tx = v; pMeldung("");
+    } else {
+      const st = stellenMitWert(v);
+      if (!st.length) { pMeldung(`Der Wert y = ${Zahl.dez(v, 3)} wird von ${fn} nicht angenommen.`, true); return; }
+      S.tx = st.reduce((b, x) => Math.abs(x - S.tx) < Math.abs(b - S.tx) ? x : b, st[0]);
+      pMeldung(st.length > 1 ? `${st.length} Stellen mit ${fn}(x) = ${Zahl.dez(v, 3)} – die zu ${P} nächstgelegene ist gewählt.` : "");
+    }
+    const yp = f(S.tx);                                 // Punkt in den sichtbaren Bereich holen (Maßstab bleibt)
+    if (!(X(S.tx) > 0 && X(S.tx) < W && Y(yp) > 0 && Y(yp) < H)) { S.view.cx = S.tx; S.view.cy = yp; for (const k of ["f", "g"]) mit(k, verteileStuetz); }
+    if (!S.pAn) { S.pAn = true; $("tgP").setAttribute("aria-pressed", true); }
+    render();
+  }
+  pxIn.addEventListener("input", () => pEingabe("x", pxIn));
+  pyIn.addEventListener("input", () => pEingabe("y", pyIn));
+  for (const inp of [pxIn, pyIn]) inp.addEventListener("blur", () => { inp.classList.remove("bad"); render(); });
+  // ----- Sekante durch A und B auf der bearbeiteten Funktion: Steigungsdreieck, Δx, Δy, s_AB(x) (wie in Python)
+  const sekIn = { xA: $("sxA"), yA: $("syA"), xB: $("sxB"), yB: $("syB") }, sekHinweis = $("sekHinweis");
+  const sekZahl = s => { try { return typeof zahlLesen === "function" ? zahlLesen(s) : Zahl.parse(s); } catch { return null; } };
+  function sekMeldung(text, fehler = false) { sekHinweis.textContent = text; sekHinweis.classList.toggle("fehler", fehler); }
+  function sekKnopf() { $("sek").setAttribute("aria-pressed", S.sek.an); $("sekFelder").hidden = !S.sek.an; if (!S.sek.an) sekMeldung(""); }
+  function sekPlatzieren() {
+    // A und B unten links im gerade sichtbaren Teil des Graphen der bearbeiteten (geladenen) Funktion
+    const x0 = wx(0), x1 = wx(W), y0 = wy(H), y1 = wy(0), bx = x1 - x0, by = y1 - y0, N = 400, vis = [];
+    for (let i = 0; i <= N; i++) {
+      const x = x0 + bx * (0.1 + 0.8 * i / N), y = f(x);
+      if (Number.isFinite(y) && y > y0 + 0.1 * by && y < y1 - 0.1 * by) vis.push([x, y]);
+    }
+    if (vis.length < 2) { S.sek.xA = x0 + 0.2 * bx; S.sek.xB = x0 + 0.42 * bx; return false; }
+    const wert = ([x, y]) => (x - x0) / bx + (y - y0) / by;          // klein = unten links
+    const A = vis.reduce((b, q) => wert(q) < wert(b) ? q : b, vis[0]);
+    let pool = vis.filter(q => q[0] > A[0] + 0.08 * bx);
+    if (!pool.length) pool = vis.filter(q => q[0] < A[0] - 0.08 * bx);
+    if (!pool.length) pool = vis.filter(q => q[0] !== A[0]);
+    // B etwa ein Viertel der Bildbreite weiter rechts, möglichst so, dass Δy gut sichtbar ist
+    const naechster = ziel => pool.reduce((b, q) => Math.abs(q[0] - ziel) < Math.abs(b[0] - ziel) ? q : b, pool[0]);
+    let B = null;
+    for (const t of [0.25, 0.2, 0.3, 0.15, 0.35, 0.4, 0.5]) { const q = naechster(A[0] + Math.sign(pool[0][0] - A[0]) * t * bx); if (Math.abs(q[1] - A[1]) >= 0.1 * by) { B = q; break; } }
+    if (!B) B = naechster(A[0] + Math.sign(pool[0][0] - A[0]) * 0.25 * bx);
+    const schritt = niceStep(72 / S.view.sx) / 4;                   // auf eine Viertel-Gitterweite runden
+    const rund = x => { const r = Math.round(x / schritt) * schritt + 0; return Number.isFinite(f(r)) ? r : x; };
+    S.sek.xA = rund(A[0]); S.sek.xB = rund(B[0]);
+    if (S.sek.xA === S.sek.xB) S.sek.xB = B[0];
+    return true;
+  }
+  function sekante() {                                 // Sekante durch A(x_A | f(x_A)) und B(x_B | f(x_B))
+    if (!S.sek.an || !S.kurven.f) return null;
+    const xA = S.sek.xA, xB = S.sek.xB, yA = f(xA), yB = f(xB), fn = S.geladen;
+    if (!Number.isFinite(yA) || !Number.isFinite(yB)) return { xA, yA, xB, yB, fehlt: true, fn };
+    const dx = xB - xA, dy = yB - yA;
+    if (Math.abs(dx) < 1e-12) return { xA, yA, xB, yB, dx: 0, dy, gleich: true, fn };
+    let m = dy / dx; if (Math.abs(m) < 1e-12) m = 0;
+    let n = yA - m * xA; if (Math.abs(n) < 1e-12) n = 0;
+    return { xA, yA, xB, yB, dx, dy, m, n, fn };
+  }
+  function sekEingabe(welche, P, inp) {
+    const v = sekZahl(inp.value), fn = NAME[S.akt].f, key = "x" + P;
+    if (v === null || !Number.isFinite(v)) { inp.classList.add("bad"); sekMeldung("Ungültige Eingabe", true); return; }
+    inp.classList.remove("bad");
+    if (welche === "x") {
+      if (!Number.isFinite(f(v))) { sekMeldung(`${fn} ist an der Stelle x = ${Zahl.dez(v, 3)} nicht definiert.`, true); return; }
+      S.sek[key] = v; sekMeldung("");
+    } else {
+      const st = stellenMitWert(v);
+      if (!st.length) { sekMeldung(`Der Wert y = ${Zahl.dez(v, 3)} wird von ${fn} nicht angenommen.`, true); return; }
+      const alt = S.sek[key];
+      S.sek[key] = st.reduce((b, x) => Math.abs(x - alt) < Math.abs(b - alt) ? x : b, st[0]);
+      sekMeldung(st.length > 1 ? `${st.length} Stellen mit ${fn}(x) = ${Zahl.dez(v, 3)} – die zu ${P} nächstgelegene ist gewählt.` : "");
+    }
+    render();
+  }
+  $("sek").addEventListener("click", () => { S.sek.an = !S.sek.an; if (S.sek.an) { sekPlatzieren(); sekMeldung(""); } sekKnopf(); render(); });
+  for (const P of ["A", "B"]) for (const w of ["x", "y"]) {
+    const inp = sekIn[w + P];
+    inp.addEventListener("input", () => sekEingabe(w, P, inp));
+    inp.addEventListener("blur", () => { inp.classList.remove("bad"); render(); });
+  }
+  // ----- Trace-Modus: gestrichelte Senkrechte an der Stelle x mit Punkten auf allen sichtbaren Graphen.
+  // Kurven, die bei laufendem Trace eingeschaltet werden, entstehen als Spur hinter dem Trace-Punkt.
+  const trIn = { x: $("trX"), y: $("trY") }, trHinweis = $("trHinweis");
+  function trMeldung(text, fehler = false) { trHinweis.textContent = text; trHinweis.classList.toggle("fehler", fehler); }
+  function spurVon(K) { return S.trace.an ? S.trace.spur[K.fn + ":" + K.key] || null : null; }
+  function spurSchalten(fn, key, an) {                 // Kurve bei laufendem Trace eingeschaltet -> Spur ab der Trace-Stelle
+    const id = fn + ":" + key;
+    if (!S.trace.an || !an) { delete S.trace.spur[id]; return; }
+    S.trace.spur[id] = [[S.trace.x, S.trace.x]];
+  }
+  function spurErweitern(x0, x1) {                     // überstrichenen Bereich [x0; x1] zu allen Spuren hinzufügen
+    const lo = Math.min(x0, x1), hi = Math.max(x0, x1);
+    for (const id of Object.keys(S.trace.spur)) {
+      const iv = [...S.trace.spur[id], [lo, hi]].sort((p, q) => p[0] - q[0]), neu = [];
+      for (const [a, b] of iv) { const l = neu[neu.length - 1]; if (l && a <= l[1]) l[1] = Math.max(l[1], b); else neu.push([a, b]); }
+      S.trace.spur[id] = neu;
+    }
+  }
+  function traceSetzen(x) { spurErweitern(S.trace.x, x); S.trace.x = x; }
+  function tracePlatzieren() {                         // Startpunkt unten links im Grafikfenster
+    const schritt = niceStep(72 / S.view.sx) / 4;
+    S.trace.x = Math.round(wx(W * 0.15) / schritt) * schritt + 0;
+  }
+  function traceKnopf() { $("tTrace").setAttribute("aria-pressed", S.trace.an); $("traceFelder").hidden = !S.trace.an; if (!S.trace.an) trMeldung(""); }
+  $("tTrace").addEventListener("click", () => {
+    S.trace.an = !S.trace.an; S.trace.spur = {};
+    if (S.trace.an) tracePlatzieren();
+    traceKnopf(); render();
+  });
+  function traceWerte() {                              // alle sichtbaren Kurven von f und g an der Trace-Stelle
+    const x = S.trace.x, w = [];
+    for (const k of ["f", "g"]) mit(k, () => { for (const K of S.kd) w.push({ K, y: K.g(x) }); });
+    return w;
+  }
+  function traceEingabe(welche, inp) {
+    const v = sekZahl(inp.value), fn = NAME[S.akt].f;
+    if (v === null || !Number.isFinite(v)) { inp.classList.add("bad"); trMeldung("Ungültige Eingabe", true); return; }
+    inp.classList.remove("bad");
+    if (welche === "x") { traceSetzen(v); trMeldung(""); }
+    else {
+      if (!S.kurven.f) { trMeldung(`${fn} ist ausgeblendet – y bezieht sich auf ${fn}(x).`, true); return; }
+      const st = stellenMitWert(v);
+      if (!st.length) { trMeldung(`Der Wert y = ${Zahl.dez(v, 3)} wird von ${fn} nicht angenommen.`, true); return; }
+      const x = st.reduce((b, q) => Math.abs(q - S.trace.x) < Math.abs(b - S.trace.x) ? q : b, st[0]);
+      traceSetzen(x);
+      trMeldung(st.length > 1 ? `${st.length} Stellen mit ${fn}(x) = ${Zahl.dez(v, 3)} – die nächstgelegene ist gewählt.` : "");
+    }
+    render();
+  }
+  for (const w of ["x", "y"]) {
+    trIn[w].addEventListener("input", () => traceEingabe(w, trIn[w]));
+    trIn[w].addEventListener("blur", () => { trIn[w].classList.remove("bad"); render(); });
+  }
+  function traceHTML() {
+    if (!S.trace.an) return "";
+    const w = traceWerte(), x = S.trace.x;
+    let h = `<div><h3 style="--c:${C.trace}"><span class="dot"></span>Trace an der Stelle x = ${Zahl.dez(x, 3)}</h3>`;
+    if (!w.length) h += `<span class="empty">keine Funktion eingeblendet</span>`;
+    for (const { K, y } of w) h += `<div class="int-row"><span style="color:${C[K.farbe]}">${K.name}(${Zahl.dez(x, 3)})${spurVon(K) ? " · Spur" : ""}</span>` +
+      `<span>${Number.isFinite(y) ? Zahl.dez(y, 4) : "nicht definiert"}</span></div>`;
+    return h + `</div>`;
+  }
+  // ----- Schnittpunkte aller sichtbaren Graphen (paarweise) und y-Achsenabschnitte
+  function imSpur(K, x) { const sp = spurVon(K); return !sp || sp.some(([a, b]) => x >= a - 1e-9 && x <= b + 1e-9); }
+  function sichtbareKurven() { const L = []; for (const k of ["f", "g"]) mit(k, () => { L.push(...S.kd); }); return L; }
+  function schnittpunkte() {
+    const L = sichtbareKurven(), x0 = wx(0), x1 = wx(W), res = [];
+    for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
+      const A = L[i], B = L[j]; let xs;
+      if (A.c && B.c) {                                // zwei Polynome: exakt über die Nullstellen der Differenz
+        const d = Array.from({ length: Math.max(A.c.length, B.c.length) }, (_, q) => (A.c[q] || 0) - (B.c[q] || 0));
+        const sk = Math.max(1e-300, ...A.c.map(Math.abs), ...B.c.map(Math.abs));
+        if (d.every(v => Math.abs(v) <= 1e-12 * sk)) continue;            // gleiche Graphen
+        const dt = Polynom.trim(d.map(v => Math.abs(v) <= 1e-13 * sk ? 0 : v));
+        xs = dt.length < 2 ? [] : Polynom.nullstellen(dt);
+      } else {                                         // sonst numerisch im sichtbaren Bereich
+        const g = x => A.g(x) - B.g(x), N = 4000, gx = Array.from({ length: N + 1 }, (_, q) => x0 + (x1 - x0) * q / N);
+        const gy = gx.map(g);
+        if (gy.every(v => !Number.isFinite(v) || Math.abs(v) < 1e-12)) continue;
+        xs = Analyse.nullstellenVon(g, gx, gy).filter(x => {
+          const a = A.g(x), b = B.g(x);
+          return Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 1e-6 * (1 + Math.abs(a) + Math.abs(b));
+        });
+      }
+      for (const x of xs) {
+        if (x < x0 || x > x1 || !imSpur(A, x) || !imSpur(B, x)) continue;
+        const y = A.g(x);
+        if (Number.isFinite(y)) res.push({ x: Math.abs(x) < 1e-12 ? 0 : x, y: Math.abs(y) < 1e-12 ? 0 : y, A, B });
+      }
+    }
+    return res.sort((p, q) => p.x - q.x);
+  }
+  function yAbschnitte() {
+    return sichtbareKurven().filter(K => imSpur(K, 0)).map(K => { const y = K.g(0); return { K, y: Math.abs(y) < 1e-12 ? 0 : y }; });
+  }
+  function schnittHTML() {
+    let h = "";
+    if (S.show.schnitt) {
+      const L = S.schnitte;
+      h += `<div><h3 style="--c:${C.schnitt}"><span class="dot"></span>Schnittpunkte der Graphen <span class="count">${L.length}</span></h3>` +
+        (sichtbareKurven().length < 2 ? `<span class="empty">mindestens zwei Graphen einblenden</span>`
+          : L.length ? `<ul>${L.map(s => `<li>${s.A.name} ∩ ${s.B.name}: ${k3(s.x, s.y)}</li>`).join("")}</ul>` : `<span class="empty">keine im sichtbaren Bereich</span>`) + `</div>`;
+    }
+    if (S.show.yachse) {
+      const L = yAbschnitte();
+      h += `<div><h3 style="--c:${C.yachse}"><span class="dot"></span>y-Achsenabschnitte <span class="count">${L.filter(q => Number.isFinite(q.y)).length}</span></h3>` +
+        (L.length ? `<ul>${L.map(q => `<li>${q.K.name}(0) = ${Number.isFinite(q.y) ? Zahl.dez(q.y, 3) + " · Punkt " + k3(0, q.y) : "nicht definiert"}</li>`).join("")}</ul>`
+                  : `<span class="empty">keine Funktion eingeblendet</span>`) + `</div>`;
+    }
+    return h;
+  }
+
+  // ----- Abspielen: Trace-Punkt läuft gleichmäßig nach rechts (ganze Bildbreite in 8 s); Spuren wachsen mit
+  let spielt = false, letzteZeit = null;
+  function abspielKnopf() { const b = $("tPlay"); b.setAttribute("aria-pressed", spielt); b.textContent = spielt ? "❚❚ Anhalten" : "▶ Abspielen"; }
+  function abspielSchritt(t) {
+    if (!spielt) return;
+    if (letzteZeit === null) letzteZeit = t;
+    const dt = Math.min(t - letzteZeit, 100); letzteZeit = t;
+    const ende = wx(W * 0.97), x = Math.min(S.trace.x + (wx(W) - wx(0)) * dt / 8000, ende);
+    traceSetzen(x); render();
+    if (x >= ende) { spielt = false; abspielKnopf(); return; }
+    requestAnimationFrame(abspielSchritt);
+  }
+  function abspielen(an = !spielt) {
+    if (an) {
+      if (!S.trace.an) { S.trace.an = true; S.trace.spur = {}; tracePlatzieren(); traceKnopf(); }
+      if (S.trace.x >= wx(W * 0.97) - 1e-9) {          // am rechten Rand: von vorn beginnen, Spuren neu aufbauen
+        tracePlatzieren();
+        for (const id of Object.keys(S.trace.spur)) S.trace.spur[id] = [[S.trace.x, S.trace.x]];
+      }
+      spielt = true; letzteZeit = null; abspielKnopf(); requestAnimationFrame(abspielSchritt);
+    } else { spielt = false; abspielKnopf(); }
+  }
+  $("tPlay").addEventListener("click", () => abspielen());
+  $("tTrace").addEventListener("click", () => { if (!S.trace.an && spielt) abspielen(false); });
+
+  function sekanteHTML() {                             // Ergebnisse: A, B, Δx, Δy, m und Sekantengleichung
+    const s = S.sk; if (!s) return "";
+    const fn = NAME[s.fn].f;
+    let h = `<div><h3 style="--c:${C.sekante}"><span class="dot"></span>Sekante an ${fn} durch A und B</h3>`;
+    if (s.fehlt) return h + `<span class="empty">${fn} ist an x<sub>A</sub> oder x<sub>B</sub> nicht definiert.</span></div>`;
+    h += `<div class="int-row"><span>A</span><span>${k3(s.xA, s.yA)}</span></div>
+      <div class="int-row"><span>B</span><span>${k3(s.xB, s.yB)}</span></div>
+      <div class="int-row"><span>Δx = x<sub>B</sub> − x<sub>A</sub></span><span>${Zahl.dez(s.dx, 4)}</span></div>
+      <div class="int-row"><span>Δy = y<sub>B</sub> − y<sub>A</sub></span><span>${Zahl.dez(s.dy, 4)}</span></div>`;
+    if (s.gleich) return h + `<span class="empty">A und B fallen zusammen – keine Sekante.</span></div>`;
+    h += `<div class="int-row"><span>Steigung m = Δy / Δx</span><span>${Zahl.dez(s.m, 4)}</span></div>
+      <ul class="eqs"><li class="eq" style="color:${C.sekante}">${geradeHTML({ ...s, typ: "P" }).replace("<i>t</i><sub>P</sub>", "<i>s</i><sub>AB</sub>")}</li></ul>`;
+    return h + `</div>`;
+  }
+
+  // ----- Tangenten: Auswahl, Farben, Terme (für die geladene Funktion)
+  const tangentenSichtbar = () => !S.kurven.f ? [] : (S.tang || []).filter(t =>
+    (t.typ === "H" && S.show.tH) || (t.typ === "T" && S.show.tT) || ((t.typ === "W" || t.typ === "S") && S.show.tW))
+    .map(t => ({ ...t, fn: S.geladen })).concat(S.tP ? [S.tP] : []);
+  const tFarbe = typ => typ === "H" ? C["t-hoch"] : typ === "T" ? C["t-tief"] : (typ === "P" || typ === "Q") ? C["t-frei"] : C["t-wende"];
+  const tIndex = t => (t.typ === "P" || t.typ === "Q") ? t.typ : (t.fn === "g" ? "g" : "") + t.typ + tief(t.nr);
+  const klein = v => Math.abs(v) < 5e-12;
+  function geradeText(m, n) {
+    let s = "";
+    if (!klein(m)) s = (m < 0 ? "−" : "") + (Zahl.dez(Math.abs(m), 2) === "1" ? "" : Zahl.dez(Math.abs(m), 2)) + "x";
+    if (!klein(n)) s = s ? s + (n < 0 ? " − " : " + ") + Zahl.dez(Math.abs(n), 2) : Zahl.dez(n, 2);
+    return s || "0";
+  }
+  function mathTeile(t) {
+    const F = (st, px) => `${st}${px}px ${FONT_MATH}`;
+    const teile = [{ s: "t", font: F("italic ", 17) }, { s: tIndex(t), font: F("", 11), dy: 4 },
+                   { s: "(", font: F("", 16) }, { s: "x", font: F("italic ", 16) }, { s: ") = ", font: F("", 16) }];
+    for (const s of geradeText(t.m, t.n).split(/(x)/)) if (s) teile.push({ s, font: F(s === "x" ? "italic " : "", 16) });
+    return teile;
+  }
+  function geradeHTML(t) {
+    const kopf = `<i>t</i><sub>${tIndex(t)}</sub>(<i>x</i>)<span class="op">=</span>`;
+    let s = "";
+    if (!klein(t.m)) s = (t.m < 0 ? "−" : "") + (zahlHTML(Math.abs(t.m)) === "1" ? "" : zahlHTML(Math.abs(t.m))) + "<i>x</i>";
+    if (!klein(t.n)) s = s ? s + `<span class="op">${t.n < 0 ? "−" : "+"}</span>` + zahlHTML(Math.abs(t.n)) : (t.n < 0 ? "−" : "") + zahlHTML(Math.abs(t.n));
+    return kopf + (s || "0");
+  }
+
+  // ----- Term, Felder, Ergebnisse
+  function zahlHTML(v) {
+    const b = Zahl.bruch(v);
+    if (b && b[1] !== 1) return `<span class="frac"><span>${b[0]}</span><span>${b[1]}</span></span>`;
+    if (b) return String(b[0]);
+    const fb = Zahl.fakBruch(v);
+    if (fb) return `<span class="frac"><span>${fb[0]}</span><span>${fb[1]}!</span></span>`;
+    if (Zahl.wissNoetig(v)) { const [m, e] = Zahl.wiss(v); return `${Zahl.dez(m, 2)}·10<sup>${String(e).replace("-", "−")}</sup>`; }
+    return Zahl.dez(v, 3);
+  }
+  function termHTML(c, name = `<span class="var">f</span>`) {
+    const t = [];
+    for (let i = c.length - 1; i >= 0; i--) {
+      const a = c[i]; if (a === 0) continue;
+      const m = Math.abs(a); let z = zahlHTML(m); if (z === "1" && i > 0) z = "";
+      const p = i === 0 ? "" : i === 1 ? `<span class="var">x</span>` : `<span class="var">x</span><sup>${i}</sup>`;
+      t.push([a < 0, z + p]);
+    }
+    if (!t.length) t.push([false, "0"]);
+    return `${name}(<span class="var">x</span>) <span class="op">=</span> ` +
+      t.map(([neg, s], k) => `<span class="tm">${k === 0 ? (neg ? "−" : "") + s : `<span class="op">${neg ? "−" : "+"}</span>${s}`}</span>`).join(" ");
+  }
+  const k3 = (x, y) => `(${Zahl.dez(x, 3)} | ${Zahl.dez(y, 3)})`;
+  function kurveHTML(K) {                              // Nullstellen, Extrema, Wendepunkte, Integral einer Kurve
+    const e = K.erg;
+    const block = (titel, farbe, items) => `<div><h3 style="--c:${farbe}"><span class="dot"></span>${titel} <span class="count">${items.length}</span></h3>` +
+      (items.length ? `<ul>${items.map(s => `<li>${s}</li>`).join("")}</ul>` : `<span class="empty">keine</span>`) + `</div>`;
+    let h = "";
+    if (K.c.every(a => a === 0)) h += `<div class="empty">${K.name} ist die Nullfunktion.</div>`;
+    if (S.show.null) h += block("Nullstellen", C.null, e.nullstellen.map((x, i) => `x${tief(i + 1)} = ${Zahl.dez(x, 3)}`));
+    if (S.show.ext) h += block("Extrempunkte", C.ext, [...e.extrema.map(p => p.typ + k3(p.x, p.y)), ...e.sattelpunkte.map(p => "S" + k3(p.x, p.y) + " Sattel")]);
+    if (S.show.wende) h += block("Wendepunkte", C.wende, e.wendepunkte.map(p => "W" + k3(p.x, p.y)));
+    if (S.show.integral) h += `<div><h3 style="--c:${C["int-pos"]}"><span class="dot"></span>Integral von ${Zahl.dez(S.a, 3)} bis ${Zahl.dez(S.b, 3)}</h3>
+      <div class="int-row"><span>∫ ${K.name}(x) dx</span><span>${Zahl.dez(e.integral, 4)}</span></div>
+      <div class="int-row"><span>Flächeninhalt A</span><span>${Zahl.dez(e.flaeche, 4)}</span></div></div>`;
+    return h;
+  }
+  function tangentenHTML() {                           // Punkt P bzw. Q und Tangentengleichungen der geladenen Funktion
+    let h = "";
+    const tg = tangentenSichtbar(), fn = nm().f;
+    if (S.tP) {
+      const t = S.tP, m = t.existiert === false ? "existiert nicht (Knick)" : t.senkrecht ? "unendlich (senkrecht)" : Zahl.dez(t.m, 4);
+      h += `<div><h3 style="--c:${C["t-frei"]}"><span class="dot"></span>Tangente im Punkt ${nm().P}</h3>
+        <div class="int-row"><span>${nm().P}</span><span>${k3(t.x0, t.y0)}</span></div>
+        <div class="int-row"><span>Steigung m = ${fn}′(x₀)</span><span>${m}</span></div></div>`;
+    }
+    if (S.kurven.f && (S.show.tH || S.show.tT || S.show.tW || S.pAn)) {
+      h += `<div><h3 style="--c:${C["t-wende"]}"><span class="dot"></span>Tangentengleichungen an ${fn} <span class="count">${tg.length}</span></h3>` +
+        (tg.length ? `<ul class="eqs">${tg.map(t => `<li class="eq" style="color:${tFarbe(t.typ)}">${geradeHTML(t)}<span class="pt">${tIndex(t)}${k3(t.x0, t.y0)}</span></li>`).join("")}</ul>`
+                   : `<span class="empty">keine passenden Punkte</span>`) + `</div>`;
+    }
+    return h;
+  }
+  function ergebnisHTML() {
+    const anzahl = mit("f", () => S.kd.length) + mit("g", () => S.kd.length);
+    const nurF = anzahl === 1 && mit("f", () => S.kurven.f);
+    let h = "";
+    if (!anzahl) h += `<div class="empty">Keine Funktion eingeblendet – in den Funktionsleisten über dem Koordinatensystem auswählen.</div>`;
+    for (const k of ["f", "g"]) h += mit(k, () => {
+      let t = "";
+      for (const K of S.kd) {
+        if (!nurF) t += `<div class="kurve-kopf" style="--c:${C[K.farbe]}"><span class="dot"></span><span>${termHTML(K.c, K.html)}</span>` +
+          (K.k < 0 ? `<span class="zusatz">mit ${K.name}(0) = 0</span>` : "") + `</div>`;
+        t += kurveHTML(K);
+      }
+      return t + tangentenHTML();
+    });
+    return h + summeHTML() + schnittHTML() + sekanteHTML() + traceHTML();
+  }
+
+  let geplant = false;
+  function render() { if (!geplant) { geplant = true; requestAnimationFrame(() => { geplant = false; aktualisiere(); }); } }
+  function aktualisiere() {
+    for (const k of ["f", "g"]) {
+      lade(k);
+      S.erg = Polynom.analysiere(S.c, S.a, S.b);
+      S.tang = Polynom.tangenten(S.c, S.erg);
+      S.kd = kurvenDaten(true, S.erg);
+      S.tP = S.pAn && S.kurven.f ? tangenteP() : null;
+    }
+    lade(S.akt);
+    const zeilen = [`<div class="tzeile">${mit("f", () => termHTML(S.c, `<span class="var">f</span>`))}</div>`];
+    if (gSichtbar()) zeilen.push(`<div class="tzeile tg">${mit("g", () => termHTML(S.c, `<span class="var">g</span>`))}</div>`);
+    $("term").innerHTML = zeilen.join("");
+    $("term").classList.toggle("lang", Math.max(mit("f", () => S.c.filter(a => a !== 0).length), gSichtbar() ? mit("g", () => S.c.filter(a => a !== 0).length) : 0) > 8);
+    for (const k of ["f", "g"]) if (document.activeElement !== termIn[k]) { termIn[k].value = mit(k, () => PolyTerm.text(S.c)); termIn[k].classList.remove("bad"); }
+    inputs.forEach(({ row, inp }, i) => {
+      row.hidden = i > S.n;
+      if (i <= S.n && document.activeElement !== inp) { inp.value = Zahl.text(S.c[i]); inp.classList.remove("bad"); }
+    });
+    for (const [id, key] of [["ga", "a"], ["gb", "b"]]) if (document.activeElement !== $(id)) $(id).value = Zahl.text(S[key]);
+    if (document.activeElement !== gnIn) gnIn.value = String(S.summe.n);
+    nRegler();
+    if (+grad.value !== S.n) { grad.value = S.n; gradOut.textContent = S.n; }
+    const yP = f(S.tx);
+    if (document.activeElement !== pxIn) pxIn.value = Zahl.text(S.tx);
+    if (document.activeElement !== pyIn) { pyIn.value = Number.isFinite(yP) ? Zahl.text(yP) : "–"; pyIn.classList.remove("bad"); }
+    $("tgP").setAttribute("aria-pressed", S.pAn);
+    S.sk = sekante();
+    S.sum = summeBerechnen();
+    S.hover = tipPos && !drag ? summeTreffer(tipPos) : null;
+    S.schnitte = S.show.schnitt ? schnittpunkte() : [];
+    if (document.activeElement !== trIn.x) trIn.x.value = Zahl.text(S.trace.x);
+    if (document.activeElement !== trIn.y) { const y = S.kurven.f ? f(S.trace.x) : NaN; trIn.y.value = Number.isFinite(y) ? Zahl.text(y) : "–"; trIn.y.classList.remove("bad"); }
+    for (const P of ["A", "B"]) {
+      const x = S.sek["x" + P], y = f(x);
+      if (document.activeElement !== sekIn["x" + P]) sekIn["x" + P].value = Zahl.text(x);
+      if (document.activeElement !== sekIn["y" + P]) { sekIn["y" + P].value = Number.isFinite(y) ? Zahl.text(y) : "–"; sekIn["y" + P].classList.remove("bad"); }
+    }
+    $("results").innerHTML = ergebnisHTML();
+    zeichne();
+    tipZeigen();
+    if (typeof opts.onChange === "function") opts.onChange(mit("f", () => S.erg), mit("g", () => S.erg));
+  }
+
+  // ----- Maus & Touch (Stützpunkte, Graph, Punkt P/Q jeweils für f und g)
+  const zeiger = new Map(); let drag = null;
+  const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  cv.addEventListener("pointerdown", e => {
+    cv.setPointerCapture(e.pointerId); const p = pos(e); zeiger.set(e.pointerId, p);
+    if (zeiger.size === 2) {
+      const [a, b] = [...zeiger.values()];
+      drag = { art: "pinch", d0: Math.hypot(a.x - b.x, a.y - b.y), m0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, v0: { ...S.view } };
+      drag.w0 = { x: wx(drag.m0.x), y: wy(drag.m0.y) }; return;
+    }
+    if (zeiger.size > 2) return;
+    const r = e.pointerType === "touch" ? 22 : 12, touch = e.pointerType === "touch";
+    if (S.trace.an) {                                                     // Trace-Punkt bzw. Senkrechte ziehen
+      const px = X(S.trace.x), ay = Math.min(Math.max(Y(0), 8), H - 8);
+      const aufPunkt = Math.hypot(px - p.x, ay - p.y) < r + 6 || traceWerte().some(({ y }) => Number.isFinite(y) && Math.hypot(px - p.x, Y(y) - p.y) < r + 6);
+      if (aufPunkt || Math.abs(px - p.x) < (touch ? 10 : 5)) { drag = { art: "trace", touch }; cv.classList.add("grab"); render(); return; }
+    }
+    if (S.sk && !S.sk.fehlt) for (const P of ["B", "A"]) {               // Sekantenpunkte A und B
+      const x = S.sek["x" + P];
+      if (Math.hypot(X(x) - p.x, Y(f(x)) - p.y) < r + 6) { drag = { art: "sekpunkt", P, touch }; cv.classList.add("grab"); render(); return; }
+    }
+    for (const k of ["f", "g"]) {
+      if (mit(k, () => S.tP && Math.hypot(X(S.tP.x0) - p.x, Y(S.tP.y0) - p.y) < r + 6)) {
+        drag = { art: "tpunkt", fn: k, touch }; cv.classList.add("grab"); render(); return;
+      }
+    }
+    if (S.show.integral || S.sum) {
+      const hy = Math.min(Math.max(Y(0), 12), H - 12);
+      for (const [key, g] of [["b", S.b], ["a", S.a]]) {
+        const px = X(g), aufMarke = Math.hypot(px - p.x, hy - p.y) < r + 4;
+        const yLo = Math.min(Y(0), Y(f(g))), yHi = Math.max(Y(0), Y(f(g)));
+        const aufLinie = Math.abs(px - p.x) < r * 0.6 && p.y > yLo && p.y < yHi;
+        if (aufMarke || aufLinie) { drag = { art: "grenze", key, touch }; cv.classList.add("grab"); render(); return; }
+      }
+    }
+    let best = null, bd = r;
+    for (const k of ["f", "g"]) mit(k, () => {
+      if (S.show.stuetz && S.kurven.f) S.sx.forEach((x, i) => { const d = Math.hypot(X(x) - p.x, Y(S.sy[i]) - p.y); if (d < bd) { bd = d; best = { fn: k, i }; } });
+    });
+    if (best) drag = { art: "stuetz", fn: best.fn, i: best.i };
+    else {
+      let fg = null, gd = r;
+      for (const k of ["f", "g"]) mit(k, () => { if (S.kurven.f) { const d = Math.abs(Y(f(wx(p.x))) - p.y); if (d < gd) { gd = d; fg = k; } } });
+      drag = fg ? mit(fg, () => ({ art: "graph", fn: fg, x0: wx(p.x), y0: wy(p.y), c0: S.c.slice(), sx0: S.sx.slice(), sy0: S.sy.slice() }))
+                : { art: "pan", p0: p, v0: { ...S.view } };
+    }
+    cv.classList.add("grab");
+  });
+  cv.addEventListener("pointermove", e => {
+    if (!zeiger.has(e.pointerId) || !drag) return;
+    const p = pos(e); zeiger.set(e.pointerId, p);
+    if (drag.art === "pinch") {
+      if (zeiger.size < 2) return;
+      const [a, b] = [...zeiger.values()], d = Math.hypot(a.x - b.x, a.y - b.y), m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, k = d / Math.max(drag.d0, 1);
+      S.view.sx = drag.v0.sx * k; S.view.sy = drag.v0.sy * k;
+      S.view.cx = drag.w0.x - (m.x - W / 2) / S.view.sx; S.view.cy = drag.w0.y + (m.y - H / 2) / S.view.sy;
+    } else if (drag.art === "pan") {
+      S.view.cx = drag.v0.cx - (p.x - drag.p0.x) / S.view.sx; S.view.cy = drag.v0.cy + (p.y - drag.p0.y) / S.view.sy;
+    } else {
+      lade(drag.fn || S.akt);
+      try {
+        if (drag.art === "stuetz") {
+          const x = wx(p.x), y = wy(p.y), minAbst = 1e-3 * (W / S.view.sx);
+          if (S.sx.some((u, j) => j !== drag.i && Math.abs(u - x) < minAbst)) return;
+          S.sx[drag.i] = x; S.sy[drag.i] = y;
+          S.c = Polynom.interpoliere(S.sx, S.sy);
+        } else if (drag.art === "trace") {
+          traceSetzen(Math.round(wx(p.x) * 1e12) / 1e12 + 0); trMeldung("");
+        } else if (drag.art === "sekpunkt") {
+          // A bzw. B gleitet entlang des Graphen der bearbeiteten Funktion; Einrasten wie bei P
+          let x = wx(p.x);
+          const e = S.erg, schritt = niceStep(72 / S.view.sx) / 2, fang = drag.touch ? 12 : 8;
+          const ziele = [...e.nullstellen, ...e.extrema.map(q => q.x), ...e.wendepunkte.map(q => q.x), Math.round(x / schritt) * schritt];
+          let bestD = fang;
+          for (const z of ziele) { const d = Math.abs(X(z) - p.x); if (d < bestD) { bestD = d; x = z; } }
+          x = Math.round(x * 1e12) / 1e12 + 0;
+          if (!Number.isFinite(f(x))) return;
+          S.sek["x" + drag.P] = x; sekMeldung("");
+        } else if (drag.art === "tpunkt") {
+          // P bzw. Q gleitet entlang des Graphen: nur die x-Position zählt; Einrasten an charakteristischen Stellen
+          let x = wx(p.x);
+          const e = S.erg, schritt = niceStep(72 / S.view.sx) / 2, fang = drag.touch ? 12 : 8;
+          const ziele = [...e.nullstellen, ...e.extrema.map(q => q.x), ...e.wendepunkte.map(q => q.x), Math.round(x / schritt) * schritt];
+          let bestD = fang;
+          for (const z of ziele) { const d = Math.abs(X(z) - p.x); if (d < bestD) { bestD = d; x = z; } }
+          x = Math.round(x * 1e12) / 1e12 + 0;
+          if (!Number.isFinite(f(x))) return;
+          S.tx = x; if (drag.fn === S.akt) pMeldung("");
+        } else if (drag.art === "grenze") {
+          // Einrasten an Nullstellen, Extrem-/Wendestellen (der bearbeiteten Funktion) und Gitterlinien
+          let x = wx(p.x);
+          const e = S.erg, schritt = niceStep(72 / S.view.sx) / 2, fang = drag.touch ? 12 : 8;
+          const ziele = [...e.nullstellen, ...e.extrema.map(q => q.x), ...e.wendepunkte.map(q => q.x), Math.round(x / schritt) * schritt];
+          let bestD = fang;
+          for (const z of ziele) { const d = Math.abs(X(z) - p.x); if (d < bestD) { bestD = d; x = z; } }
+          S[drag.key] = Math.round(x * 1e12) / 1e12 + 0;
+        } else if (drag.art === "graph") {
+          const dx = wx(p.x) - drag.x0, dy = wy(p.y) - drag.y0;
+          S.c = Polynom.verschiebe(drag.c0, dx, dy);
+          S.sx = drag.sx0.map(x => x + dx); S.sy = drag.sy0.map(y => y + dy);
+        }
+      } finally { lade(S.akt); }
+    }
+    render();
+  });
+  const ende = e => { zeiger.delete(e.pointerId); if (zeiger.size === 0) { const war = drag && (drag.art === "grenze" || drag.art === "tpunkt" || drag.art === "sekpunkt" || drag.art === "trace"); drag = null; cv.classList.remove("grab"); if (war) render(); } else if (drag && drag.art === "pinch") { const [q] = [...zeiger.values()]; drag = { art: "pan", p0: q, v0: { ...S.view } }; } };
+  cv.addEventListener("pointerup", ende); cv.addEventListener("pointercancel", ende);
+  let tipp = null;                                     // Touch: Antippen eines Rechtecks/Trapezes zeigt seinen Anteil
+  cv.addEventListener("pointermove", e => { if (!drag && e.pointerType !== "touch") summeHover(pos(e)); });
+  cv.addEventListener("pointerleave", () => { if (!drag) summeHover(null); });
+  cv.addEventListener("pointerdown", e => { tipp = e.pointerType === "touch" ? pos(e) : null; if (S.hover !== null || tipPos) summeHover(null); });
+  cv.addEventListener("pointerup", e => {
+    if (e.pointerType !== "touch" || !tipp) return;
+    const p = pos(e); if (Math.hypot(p.x - tipp.x, p.y - tipp.y) < 8) summeHover(p);
+    tipp = null;
+  });
+  cv.addEventListener("wheel", e => {
+    e.preventDefault(); const p = pos(e), k = e.deltaY < 0 ? 1.15 : 1 / 1.15, gx = wx(p.x), gy = wy(p.y);
+    S.view.sx *= k; S.view.sy *= k; S.view.cx = gx - (p.x - W / 2) / S.view.sx; S.view.cy = gy + (p.y - H / 2) / S.view.sy; render();
+  }, { passive: false });
+
+  // ----- Größe
+  function groesse() {
+    const r = wrap.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const alt = W; W = Math.max(1, r.width); H = Math.max(1, r.height);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    if (!S.view.sx) { standardAnsicht(); for (const k of ["f", "g"]) mit(k, verteileStuetz); }
+    else if (alt) { S.view.sx *= W / alt; S.view.sy *= W / alt; }
+    render();
+  }
+  new ResizeObserver(groesse).observe(wrap);
+  if (document.fonts) document.fonts.ready.then(render);
+
+  // ----- öffentliche Schnittstelle (für Einbindung in andere Seiten); fn = "f" oder "g"
+  const pruefeFn = fn => { if (!NAME[fn]) throw new Error(`Unbekannte Funktion „${fn}“ – möglich: f, g`); return fn; };
+  const api = {
+    get koeffizienten() { return mit("f", () => S.c.slice()); },
+    get koeffizientenG() { return mit("g", () => S.c.slice()); },
+    setKoeffizienten(c, fn = "f") { mit(pruefeFn(fn), () => { S.c = c.slice(); S.n = c.length - 1; verteileStuetz(); }); render(); },
+    // Polynomterm setzen, z. B. setTerm("x^2 - 3x + 1", "g")
+    setTerm(text, fn = "f") { api.setKoeffizienten(PolyTerm.parse(text), fn); },
+    setGrenzen(a, b) { S.a = a; S.b = b; render(); },
+    analyse: (fn = "f") => mit(pruefeFn(fn), () => Polynom.analysiere(S.c, S.a, S.b)),
+    ansichtAnpassen,
+    // welche Funktion Grad, Koeffizienten und Punkt P/Q gerade bearbeiten
+    bearbeite: fn => setzeAkt(pruefeFn(fn)),
+    get bearbeitet() { return S.akt; },
+    // Tangenten programmgesteuert ein-/ausblenden (null = unverändert); frei = Punkt P (f) bzw. Q (g) der Funktion fn
+    zeigeTangenten(hoch = null, tief = null, wende = null, frei = null, fn = S.akt) {
+      for (const [key, id, wert] of [["tH", "tgH", hoch], ["tT", "tgT", tief], ["tW", "tgW", wende]]) {
+        if (wert === null || wert === undefined) continue;
+        S.show[key] = !!wert; $(id).setAttribute("aria-pressed", S.show[key]);
+      }
+      if (frei !== null && frei !== undefined) mit(pruefeFn(fn), () => { if (frei && !S.pAn) pSichtbar(); S.pAn = !!frei; });
+      $("tgP").setAttribute("aria-pressed", S.pAn);
+      render();
+    },
+    tangentenVon: (fn = "f") => mit(pruefeFn(fn), () => Polynom.tangenten(S.c, Polynom.analysiere(S.c))),
+    get tangenten() { return api.tangentenVon("f"); },
+    get design() { return aktuellesDesign(); },
+    // Sekante durch A und B auf der bearbeiteten Funktion, z. B. zeigeSekante(true), setSekantenpunkte(-1, 2);
+    // sekante → { xA, yA, xB, yB, dx, dy, m, n, fn } (null, wenn ausgeblendet)
+    zeigeSekante(an = true) { S.sek.an = !!an; if (S.sek.an && W) { lade(S.akt); sekPlatzieren(); } sekKnopf(); render(); },
+    setSekantenpunkte(xA, xB) { S.sek.xA = +xA; S.sek.xB = +xB; S.sek.an = true; sekKnopf(); render(); },
+    get sekante() { lade(S.akt); const s = sekante(); return s ? { ...s } : null; },
+    // Anzeigen ein-/ausblenden, z. B. zeige({ null: true, ext: true, stuetz: true }) – Schlüssel null, ext, wende, integral, stuetz, schnitt, yachse
+    zeige(wahl = {}) {
+      for (const [key, id] of [["null", "tNull"], ["ext", "tExt"], ["wende", "tWende"], ["integral", "tInt"], ["stuetz", "tStuetz"], ["schnitt", "tSchnitt"], ["yachse", "tYAchse"]]) {
+        if (!(key in wahl)) continue;
+        S.show[key] = !!wahl[key]; $(id).setAttribute("aria-pressed", S.show[key]);
+      }
+      render();
+    },
+    zeigeStuetzpunkte(an = true) { api.zeige({ stuetz: an }); },
+    get anzeigen() { const { null: n, ext, wende, integral, stuetz, schnitt, yachse } = S.show; return { null: n, ext, wende, integral, stuetz, schnitt, yachse }; },
+    // Trace-Modus: zeigeTrace(true), setTraceX(1.5) (Spuren wachsen mit), trace → { x, werte: { f: …, "f′": … }, spur: { "f:d1": [[a, b], …] } }
+    // Abspielen des Trace-Punkts; Schnittpunkte und y-Achsenabschnitte der sichtbaren Graphen
+    abspielen() { abspielen(true); },
+    anhalten() { abspielen(false); },
+    get spielt() { return spielt; },
+    get schnittpunkte() { if (W) aktualisiere(); return schnittpunkte().map(s => ({ x: s.x, y: s.y, a: s.A.name, b: s.B.name })); },
+    get yAbschnitte() { if (W) aktualisiere(); return yAbschnitte().map(q => ({ kurve: q.K.name, y: q.y })); },
+    zeigeTrace(an = true) { S.trace.an = !!an; S.trace.spur = {}; if (S.trace.an && W) tracePlatzieren(); traceKnopf(); render(); },
+    setTraceX(x) { if (!S.trace.an) { S.trace.an = true; S.trace.spur = {}; traceKnopf(); } traceSetzen(+x); render(); },
+    get trace() {
+      if (!S.trace.an) return null;
+      if (W) aktualisiere();                           // Kurvendaten sofort auf den neuen Stand bringen
+      return { x: S.trace.x, werte: Object.fromEntries(traceWerte().map(({ K, y }) => [K.name, y])),
+               spur: Object.fromEntries(Object.entries(S.trace.spur).map(([k, v]) => [k, v.map(i => i.slice())])) };
+    },
+    setTangentenpunkt(x, fn = S.akt) { mit(pruefeFn(fn), () => { S.tx = x; S.pAn = true; }); $("tgP").setAttribute("aria-pressed", S.pAn); render(); },
+    get tangenteP() { return mit("f", () => S.tP ? { ...S.tP } : null); },
+    get tangenteQ() { return mit("g", () => S.tP ? { ...S.tP } : null); },
+    // Riemann-Summen der bearbeiteten Funktion: zeigeSumme("ober" | "unter" | "trapez" | "mitte" | null, n), setTeilintervalle(n);
+    // summe → { art, name, zeichen, n, a, b, dx, wert, integral, fn, teile: [{ i, x0, x1, xi, h, (y0, y1), wert, anteil }] } oder null
+    zeigeSumme(art = "ober", n = null) { if (n !== null) api.setTeilintervalle(n); setzeSumme(art); },
+    setTeilintervalle(n) {
+      const k = nLesen(String(n)); if (k === null) throw new Error(`n muss eine ganze Zahl von 1 bis ${Summen.N_MAX} sein`);
+      S.summe.n = k; S.hover = null; render();
+    },
+    get summe() {
+      if (W) aktualisiere();
+      const s = S.sum; return s ? (s.teile ? { ...s, teile: s.teile.map(t => ({ ...t })) } : { ...s }) : null;
+    },
+    // Grafik als SVG: svg() → Text der Vektorgrafik, svgDateiname → z. B. "f_g'_Extrema_Sekante", speichereSVG() bietet die Datei an
+    svg: () => svgText(),
+    get svgDateiname() { return svgDateiname(); },
+    speichereSVG: () => svgSpeichern(),
+    setDesign: name => setzeDesign(name),
+    designWechseln() { setzeDesign(aktuellesDesign() === "3b1b" ? "pearson" : "3b1b"); return aktuellesDesign(); },
+    // Funktionsleisten: z. B. zeigeKurven({ F: true, d1: true }, "g") – Schlüssel F (Stammfunktion), f (Funktion selbst), d1, d2, d3
+    zeigeKurven(wahl = {}, fn = "f") { mit(pruefeFn(fn), () => { for (const k of Object.keys(wahl)) if (k in S.kurven) { const war = S.kurven[k]; S.kurven[k] = !!wahl[k]; if (war !== S.kurven[k]) spurSchalten(fn, k, S.kurven[k]); } }); kurvenKnoepfeSetzen(); render(); },
+    get kurven() { return mit("f", () => ({ ...S.kurven })); },
+    get kurvenG() { return mit("g", () => ({ ...S.kurven })); },
+    // Analyse aller eingeblendeten Kurven einer Funktion: { F: {…}, f: {…}, d1: {…}, … }
+    analyseKurven: (fn = "f") => mit(pruefeFn(fn), () => Object.fromEntries(kurvenDaten(true).map(K => [K.key, K.erg])))
+  };
+  return api;
+}
+
+window.Polynom = Polynom; window.PolyTerm = PolyTerm; window.Summen = Summen; window.SvgExport = SvgExport;
+window.explorer = PolynomExplorer({ grad: 3 });
+</script>
+
+
+</body></html>

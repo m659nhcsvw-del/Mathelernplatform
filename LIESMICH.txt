@@ -1,0 +1,16 @@
+Formeleditor und Funktionen-Explorer für GitHub Pages – Version 1.3.1
+
+Diesen Ordner („Formeleditor-Web“) einmal zu GitHub hochladen, dann laufen beide Programme auf iPad und Mac im Browser:
+
+1. github.com öffnen, anmelden (kostenloses Konto genügt).
+2. Oben rechts „+“ → „New repository“. Name z. B. „formeln“, „Public“ wählen, „Create repository“.
+3. Auf der neuen Seite „uploading an existing file“ anklicken.
+4. Im Finder den INHALT dieses Ordners markieren (index.html, sw.js, LIESMICH.txt, Ordner formeleditor, explorer und downloads)
+   und in das Browserfenster ziehen. Warten, bis alle Dateien gelistet sind, dann „Commit changes“.
+5. „Settings“ → links „Pages“ → bei „Branch“ „main“ und „/ (root)“ wählen → „Save“.
+6. Nach ein bis zwei Minuten steht oben die Adresse, z. B.  https://BENUTZERNAME.github.io/formeln/
+7. Diese Adresse auf dem iPad in Safari öffnen, Formeleditor bzw. Explorer antippen,
+   Teilen → „Zum Home-Bildschirm“.
+
+Aktualisieren: im Repository „Add file“ → „Upload files“, die neuen Dateien hineinziehen (gleiche Namen ersetzen die alten).
+Beim ersten Start lädt das iPad Python mit SymPy, NumPy und SciPy (etwa 30–40 MB); danach kommt alles aus dem Speicher.
