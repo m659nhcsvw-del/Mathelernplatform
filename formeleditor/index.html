@@ -113,6 +113,8 @@ dialog .knoepfe { display: flex; gap: 8px; justify-content: flex-end; margin-top
 .katex-display > .katex { text-align: left; }
 .vorlage .katex { font-size: 1em; }
 @media (max-width: 760px) { main { grid-template-columns: 1fr; } aside { max-height: 42vh; border-right: 0; border-bottom: 1px solid var(--linie); } }
+.urheber { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 28px; padding: 5px 16px 7px; background: var(--panel); border-top: 1px solid var(--linie);
+  font-size: 11.5px; line-height: 1.4; color: var(--dim); text-align: center; flex: none; }
 </style>
 </head>
 <body>
@@ -165,6 +167,7 @@ dialog .knoepfe { display: flex; gap: 8px; justify-content: flex-end; margin-top
     </div>
   </section>
 </main>
+<footer class="urheber" role="contentinfo"><span>Copyright B. Ericke - Schuljahr 2026/2027.</span><span>Nur für den Unterricht.</span><span>Weitergabe, Veränderungen, Veröffentlichung durch Dritte nicht gestattet.</span></footer>
 <div class="toast" id="toast" hidden></div>
 <div class="abwurf" id="abwurf" hidden>Loslassen – Formel wieder bearbeiten</div>
 <dialog id="ladeDialog">

@@ -378,6 +378,14 @@ input[type=text].bad { border-color: var(--null); }
 .nregler output { font: 18px var(--font-math); color: var(--summe); text-align: right; font-variant-numeric: tabular-nums; }
 .nregler .skala { grid-column: 2; display: flex; justify-content: space-between; margin-top: -8px; font-size: 10.5px; color: var(--dim); }
 @media (max-width: 380px) { .summen { grid-template-columns: 1fr 1fr; } }
+/* URHEBER-CSS-START */
+/* Fußzeile: Urheberhinweis */
+.urheber { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 28px; padding: 4px 16px 8px; box-sizing: border-box;
+  font: 11.5px/1.4 var(--font-ui, -apple-system, "Segoe UI", Arial, sans-serif); color: var(--dim, #8d99a4); text-align: center; }
+.urheber.in-stage { display: none; padding: 6px 0 0; justify-content: flex-start; flex: none; }
+@media (min-width: 900px) { .urheber.in-stage { display: flex; } .urheber:not(.in-stage) { display: none; } }   /* breit: unter dem Hinweis in der linken Spalte */
+@media print { .urheber { color: #333; } }
+/* URHEBER-CSS-ENDE */
 </style>
 
 <div class="app">
@@ -431,6 +439,7 @@ input[type=text].bad { border-color: var(--null); }
     <div class="nregler"><label for="nSlider1">Teilintervalle <i>n</i></label><input type="range" id="nSlider1" min="0" max="1000" step="1" value="301" aria-describedby="sumHinweis"><output for="nSlider1">8</output><span class="skala" aria-hidden="true"><span>1</span><span>10</span><span>100</span><span>1000</span></span></div>
     <p class="hint lo-hinweis"><b>Pages, Keynote, Numbers:</b> „⧉ Bild kopieren“ und im Dokument einsetzen (<kbd>⌘</kbd><kbd>V</kbd> bzw. tippen → „Einsetzen“). Für Vektorqualität „⤓ Grafik als SVG speichern“ und in iWork <b>Einfügen → Auswählen …</b> bzw. <b>+ → Foto oder Video → Einfügen aus</b>. Jede Grafik merkt sich alle Einstellungen: mit „⟲ Grafik öffnen …“ (SVG oder PNG) oder über „Verlauf“ geht es genau dort weiter. <b>Ziehen (iPad, Mac):</b> das Bild bei „ziehen ⇢“ halten und in die andere App ziehen, „✎ Link“ daneben legen; zum Ändern das Bild zurück hierher ziehen oder den Link antippen.</p>
     <p class="hint">Beim Start ist nur der Graph von f zu sehen – alles Weitere über die Knöpfe einblenden. Schreibweise: 2x^2, 0,5x, sin(x), e^x, √x, |x|, x!, log(x; 2) – Argumente mit Semikolon trennen. Zweite Funktion g(x) im zweiten Feld · „Bearbeiten“ wählt, ob Grad, Koeffizienten und Punkt zu f oder g gehören · Kreise ziehen (nur Polynome): Graph verformen · Graph ziehen: verschieben · Punkt P (an f) bzw. Q (an g) ziehen oder Koordinaten eintragen: Tangente gleitet entlang des Graphen · Sekante: A und B ziehen oder ihre Koordinaten eintragen (Steigungsdreieck mit Δx, Δy) · Trace-Modus: Senkrechte bzw. Punkt auf der x-Achse ziehen oder x eintragen – Kurven, die danach eingeschaltet werden, entstehen als Spur hinter dem Trace-Punkt · „▶ Abspielen“ lässt den Trace-Punkt nach rechts laufen · Schnittpunktberechnung: Schnittpunkte aller sichtbaren Graphen · y-Achsenabschnitt: Schnittpunkte mit der y-Achse · Marken a und b auf der x-Achse ziehen: Integrationsgrenzen · Ober-, Unter-, Trapez-, Mittensumme: Knopf drücken, a, b und n eintragen (n auch über die Schieberegler, 1 … 1000) – Zeiger über ein Rechteck bzw. Trapez zeigt seinen Anteil an der Summe (absolut und in Prozent) · „⤓ Grafik als SVG speichern“: Inhalt des Grafikfensters als Vektorgrafik, benannt nach den eingeblendeten Kurven und Eigenschaften · Hintergrund ziehen: Ansicht bewegen · Mausrad oder zwei Finger: Zoom · Funktionsleisten: <i>F</i> … <i>f</i>‴ und <i>G</i> … <i>g</i>‴ einzeln ein- und ausblenden</p>
+    <!-- URHEBER-STAGE-START --><footer class="urheber in-stage"><span>Copyright B. Ericke - Schuljahr 2026/2027.</span><span>Nur für den Unterricht.</span><span>Weitergabe, Veränderungen, Veröffentlichung durch Dritte nicht gestattet.</span></footer><!-- URHEBER-STAGE-ENDE -->
   </main>
 
   <aside class="panel">
@@ -532,6 +541,7 @@ input[type=text].bad { border-color: var(--null); }
     </div>
   </aside>
 </div>
+<!-- URHEBER-START --><footer class="urheber" role="contentinfo"><span>Copyright B. Ericke - Schuljahr 2026/2027.</span><span>Nur für den Unterricht.</span><span>Weitergabe, Veränderungen, Veröffentlichung durch Dritte nicht gestattet.</span></footer><!-- URHEBER-ENDE -->
 
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitel">
   <div class="karte">
@@ -2753,6 +2763,7 @@ const Herleitung = (() => {
 })();
 // Darstellung eines Herleitungs-Dokuments mit KaTeX (gemeinsam für Explorer-Fenster und Python-Druckseite)
 const HerleitungAnsicht = (() => {
+  const URHEBER = `<footer class="hl-urheber"><span>Copyright B. Ericke - Schuljahr 2026/2027.</span><span>Nur für den Unterricht.</span><span>Weitergabe, Veränderungen, Veröffentlichung durch Dritte nicht gestattet.</span></footer>`;
   const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   function formel(tex, display) {
     try { return katex.renderToString(tex, { displayMode: display, throwOnError: false, strict: "ignore", output: "html" }); }
@@ -2787,7 +2798,7 @@ const HerleitungAnsicht = (() => {
   function html(doc) {
     let h = `<h1 class="hl-titel">${zeile(doc.titel)}</h1>`;
     for (const a of doc.abschnitte) h += `<section class="hl-abschnitt"><h2>${zeile(a.titel)}</h2>${a.inhalt.map(block).join("")}</section>`;
-    return h;
+    return h + URHEBER;
   }
   const CSS = `
 .hl-dok { font: 16px/1.55 "Latin Modern Roman", "Computer Modern Serif", "Cambria", "Georgia", serif; color: #111; background: #fff; }
@@ -2805,6 +2816,8 @@ const HerleitungAnsicht = (() => {
 .hl-dok .hl-tab th, .hl-dok .hl-tab td { border: 1px solid #c9ccd3; padding: 4px 10px; text-align: center; }
 .hl-dok .hl-tab th { background: #f0f2f6; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; }
 .hl-dok section { break-inside: auto; }
+.hl-dok .hl-urheber { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 26px; margin-top: 28px; padding-top: 8px; border-top: 1px solid #c9ccd3;
+  font: 11.5px/1.4 -apple-system, "Segoe UI", Arial, sans-serif; color: #5d6576; text-align: center; break-inside: avoid; }
 .hl-dok h2 { break-after: avoid; }
 .hl-dok .hl-formel, .hl-dok .hl-ergebnis, .hl-dok tr { break-inside: avoid; }`;
   return { html, CSS, zeile };

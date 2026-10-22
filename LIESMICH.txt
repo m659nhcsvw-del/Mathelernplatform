@@ -1,4 +1,4 @@
-Formeleditor und Funktionen-Explorer für GitHub Pages – Version 1.3.2
+Formeleditor und Funktionen-Explorer für GitHub Pages – Version 1.3.3
 
 Diesen Ordner („Formeleditor-Web“) einmal zu GitHub hochladen, dann laufen beide Programme auf iPad und Mac im Browser:
 
